@@ -1,5 +1,6 @@
-package de.meetr.hdr.paperless;
+package de.meetr.hdr.paperless.activity;
 
+import de.meetr.hdr.paperless.R;
 import de.meetr.hdr.paperless.paper.PaperFactory;
 import de.meetr.hdr.paperless.view.BitmapView;
 import android.os.Bundle;
@@ -7,7 +8,6 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -17,8 +17,6 @@ import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.ViewTreeObserver.OnPreDrawListener;
-import android.widget.ImageView;
 import android.widget.RelativeLayout.LayoutParams;
 
 public class WriteActivity extends Activity implements OnTouchListener {

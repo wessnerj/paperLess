@@ -4,5 +4,10 @@
     <string name="app_name">PaperLess</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="title_paper_list">Papers</string>
+    <string name="title_paper_detail">Paper Detail</string>
+    <string name="add_paper">Add new paper</string>
+    <string name="add_folder">Create new folder</string>
+    <string name="import_pdf">Import PDF</string>
 
 </resources>

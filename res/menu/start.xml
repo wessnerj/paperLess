@@ -1,0 +1,21 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/action_add_paper"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/add_paper"/>
+    <item
+        android:id="@+id/action_add_folder"
+        android:orderInCategory="50"
+        android:showAsAction="always"
+        android:title="@string/add_folder">
+    </item>
+    <item
+        android:id="@+id/import_pdf"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/import_pdf">
+    </item>
+
+</menu>
