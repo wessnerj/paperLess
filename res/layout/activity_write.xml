@@ -1,0 +1,58 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical"
+    tools:context=".WriteActivity" >
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="2dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_weight="1" >
+
+        <de.meetr.hdr.paperless.view.BitmapView
+            android:id="@+id/imageView1"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="0dp"
+            android:layout_weight="1"
+            android:background="#444444"
+            android:padding="4dp"
+            android:scaleType="matrix"
+            android:src="@drawable/ic_launcher" />
+
+        <View
+            android:id="@+id/view1"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="false"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="100dp"
+            android:background="@drawable/frame" />
+
+    </RelativeLayout>
+
+    <de.meetr.hdr.paperless.view.BitmapView
+        android:id="@+id/imageView2"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="2dp"
+        android:layout_weight="1"
+        android:background="#444444"
+        android:padding="4dp"
+        android:scaleType="matrix"
+        android:src="@drawable/ic_launcher" />
+
+</LinearLayout>
