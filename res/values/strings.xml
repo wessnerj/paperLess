@@ -9,5 +9,7 @@
     <string name="add_paper">Add new paper</string>
     <string name="add_folder">Create new folder</string>
     <string name="import_pdf">Import PDF</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 
 </resources>
