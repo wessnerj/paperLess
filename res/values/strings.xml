@@ -11,5 +11,10 @@
     <string name="import_pdf">Import PDF</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="enter_folder_name">Enter name for the new folder.</string>
+    <string name="folder_add_success">New folder created.</string>
+    <string name="folder_add_failure">New folder could not be created.</string>
+    <string name="delete">Delete</string>
+    <string name="delete_sure">Are you sure, you want to delete %s?</string>
 
 </resources>

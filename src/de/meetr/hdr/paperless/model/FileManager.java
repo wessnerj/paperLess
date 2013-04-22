@@ -21,6 +21,7 @@ package de.meetr.hdr.paperless.model;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.content.Context;
@@ -42,23 +43,24 @@ public class FileManager {
 		}
 	}
 	
-	public List<String> getSubFolderNames() throws Exception {
-		return this.getSubFolderNames("");
+	public boolean addFolder(String newDirPath) {
+		File f = new File(this.externalDirPath + "/" + PAPER_DIR + "/" + newDirPath);
+		if (!f.exists()) {
+			// try to create folder
+			return f.mkdirs();
+		}
+		
+		return true;
 	}
 	
-	public List<String> getSubFolderNames(String path) throws Exception {
-		return this.getDirectoryContentList(path, true);
+	public boolean deleteResource(FileResource f) {
+		File file = f.getFile();
+		this.deleteRecursivley(file);
+		
+		return !file.exists();
 	}
 	
-	public List<String> getPaperNames() throws Exception {
-		return this.getPaperNames("");
-	}
-	
-	public List<String> getPaperNames(String path) throws Exception {
-		return this.getDirectoryContentList(path, false);
-	}
-	
-	private List<String> getDirectoryContentList(String path, boolean subFolders) throws Exception {
+	public List<FileResource> getContents(String path) throws Exception {
 		String strDirPath = this.externalDirPath + "/";
 		
 		if (path.startsWith("/"))
@@ -71,19 +73,27 @@ public class FileManager {
 		if (null == directory || !directory.exists() || !directory.canRead())
 			throw new Exception("Directory not readable");
 		
-		List<String> items = new ArrayList<String>();
-		
+		List<FileResource> items = new ArrayList<FileResource>();
 		for (final File f : directory.listFiles()) {
-			if (f.toString().equals(".") || f.toString().equals(".."))
+			if (f.getName().startsWith(".") && !f.getName().equals(".."))
 				continue;
 			
-			if (f.isDirectory() && subFolders) {
-				items.add(f.getName());
-			} else if (!f.isDirectory() && !subFolders && f.toString().endsWith(Paper.FILENAME_EXTENSION)) {
-				items.add(f.getName());
-			}	
+			if (f.isDirectory()) {
+				items.add(new FileResource(f));
+			} else if (f.getName().endsWith(Paper.FILENAME_EXTENSION)) {
+				items.add(new FileResource(f));
+			}
 		}
 		
+		Collections.sort(items);
 		return items;
+	}
+	
+	private void deleteRecursivley(File f) {
+		if (f.isDirectory())
+	        for (final File child : f.listFiles())
+	        	deleteRecursivley(child);
+
+	    f.delete();
 	}
 }

@@ -19,42 +19,65 @@
 
 package de.meetr.hdr.paperless.activity;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import de.meetr.hdr.paperless.R;
 import de.meetr.hdr.paperless.model.FileManager;
+import de.meetr.hdr.paperless.model.FileResource;
+import de.meetr.hdr.paperless.view.FileListAdapter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
+import android.renderscript.FileA3D;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.Toast;
 
-public class StartActivity extends Activity {
+public class StartActivity extends Activity implements OnItemClickListener {
 	final Context context = this;
+	private String currentPath = "/";
+	
+	private FileManager fileManager;
+	private FileListAdapter listAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_start);
 		
-		FileManager fm = new FileManager(this);
+		this.fileManager = new FileManager(this);
 		
-		try {
-			List<String> files = fm.getPaperNames();
-			Log.d("NumberOfFiles", "" + files.size());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		// Set Adapter for GridView
+		this.updateListView();
+		final GridView listview = (GridView) findViewById(R.id.gridView1);	
 		
-		Log.d("PATH", getExternalFilesDir(null).toString());
-	} 
+		// Add listener for gridview
+		listview.setOnItemClickListener(this);
+		
+		// Add Context menu for gridview
+		this.registerForContextMenu(listview);
+	}
+	
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+	                                ContextMenuInfo menuInfo) {
+	    super.onCreateContextMenu(menu, v, menuInfo);
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.start_context, menu);
+	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -80,8 +103,55 @@ public class StartActivity extends Activity {
 		}
 	}
 	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
+				.getMenuInfo();
+		
+		switch (item.getItemId()) {
+		case R.id.delete:
+			this.deleteItem(info.position);
+			return true;
+		default:
+			return super.onContextItemSelected(item);
+		}
+	}
+	
 	private void addFolder() {
-		Toast.makeText(this, "Add Folder", Toast.LENGTH_SHORT).show();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setTitle(R.string.add_folder);
+		alert.setMessage(R.string.enter_folder_name);
+
+		// Set an EditText view to get user input
+		final EditText input = new EditText(this);
+		alert.setView(input);
+
+		alert.setPositiveButton(R.string.ok,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String value = input.getEditableText().toString();
+						
+						if (fileManager.addFolder(currentPath + "/" + value)) {
+							Toast.makeText(context, R.string.folder_add_success, Toast.LENGTH_SHORT).show();
+						} else {
+							Toast.makeText(context, R.string.folder_add_failure, Toast.LENGTH_LONG).show();
+						}
+						
+						updateListView();
+					}
+				});
+
+		alert.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+
+		alert.show();
+
+		// Toast.makeText(this, "Add Folder", Toast.LENGTH_SHORT).show();
 	}
 	
 	private void addPaper() {
@@ -90,5 +160,52 @@ public class StartActivity extends Activity {
 	
 	private void importPdf() {
 		Toast.makeText(this, "Import PDF", Toast.LENGTH_SHORT).show();
+	}
+	
+	private void deleteItem(int position) {
+		final FileResource r = this.listAdapter.getItem(position);
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.delete);
+		alert.setMessage(String.format(getString(R.string.delete_sure),
+				r.getName()));
+
+		alert.setPositiveButton(R.string.ok,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						fileManager.deleteResource(r);
+						
+						updateListView();
+					}
+				});
+
+		alert.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+
+		alert.show();
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		FileResource r = this.listAdapter.getItem(position);
+		Toast.makeText(context, "Clicked on: " + r.getName(), Toast.LENGTH_SHORT).show();
+	}
+	
+	private void updateListView() {
+		final GridView listview = (GridView) findViewById(R.id.gridView1);	
+		
+		List<FileResource> items = new LinkedList<FileResource>();
+		try {
+			items = this.fileManager.getContents(this.currentPath);
+		} catch (Exception e) {
+			Toast.makeText(context, "Something went wrong. Please try again.", Toast.LENGTH_SHORT).show();
+		}
+		this.listAdapter = new FileListAdapter(this, items.toArray(new FileResource[0]));
+		listview.setAdapter(this.listAdapter);
 	}
 }
