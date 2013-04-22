@@ -16,5 +16,6 @@
     <string name="folder_add_failure">New folder could not be created.</string>
     <string name="delete">Delete</string>
     <string name="delete_sure">Are you sure, you want to delete %s?</string>
+    <string name="enter_paper_name">Enter name for the new paper.</string>
 
 </resources>

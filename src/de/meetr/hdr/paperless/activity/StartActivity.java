@@ -150,12 +150,37 @@ public class StartActivity extends Activity implements OnItemClickListener {
 				});
 
 		alert.show();
-
-		// Toast.makeText(this, "Add Folder", Toast.LENGTH_SHORT).show();
 	}
 	
 	private void addPaper() {
-		Toast.makeText(this, "Add Paper", Toast.LENGTH_SHORT).show();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setTitle(R.string.add_paper);
+		alert.setMessage(R.string.enter_paper_name);
+
+		// Set an EditText view to get user input
+		final EditText input = new EditText(this);
+		alert.setView(input);
+
+		alert.setPositiveButton(R.string.ok,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String value = input.getEditableText().toString();
+
+						// TODO: Create new paper file
+
+						updateListView();
+					}
+				});
+
+		alert.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						// Canceled.
+					}
+				});
+
+		alert.show();
 	}
 	
 	private void importPdf() {
