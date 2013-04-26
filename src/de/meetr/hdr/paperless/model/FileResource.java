@@ -39,6 +39,10 @@ public class FileResource implements Comparable<FileResource> {
 	public boolean isSubDirectory() {
 		return (this.file.isDirectory() && !this.file.getName().equals(".."));
 	}
+	
+	public boolean isDocument() {
+		return (!this.file.isDirectory() && this.file.getName().endsWith(Paper.FILENAME_EXTENSION));
+	}
 
 	@Override
 	public int compareTo(FileResource another) {

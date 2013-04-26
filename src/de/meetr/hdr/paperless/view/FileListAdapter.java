@@ -62,6 +62,10 @@ public class FileListAdapter extends ArrayAdapter<FileResource> {
 		holder.text.setText(r.getName());
 		
 		// Change icon
+		if (r.isSubDirectory())
+			holder.image.setImageResource(R.drawable.icon_folder);
+		else
+			holder.image.setImageResource(R.drawable.icon_document);
 //		if (s.startsWith("Windows7") || s.startsWith("iPhone")
 //				|| s.startsWith("Solaris")) {
 //			holder.image.setImageResource(R.drawable.no);

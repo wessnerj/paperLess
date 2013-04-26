@@ -53,6 +53,24 @@ public class FileManager {
 		return true;
 	}
 	
+	public File getFile(String path, String filename) {
+		return this.getFile(path, filename, true);
+	}
+	
+	public File getFile(String path, String filename, boolean escape) {
+		File dir = new File(this.externalDirPath + "/" + PAPER_DIR + "/" + path);
+		
+		if (!dir.exists())
+			return null;
+		
+		if (escape)
+			filename = filename.replaceAll("[^a-zA-Z0-9_]+","");
+		
+		filename += Paper.FILENAME_EXTENSION;
+		
+		return new File(dir.getAbsolutePath() + "/" + filename);
+	}
+	
 	public boolean deleteResource(FileResource f) {
 		File file = f.getFile();
 		this.deleteRecursivley(file);

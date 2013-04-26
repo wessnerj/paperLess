@@ -49,6 +49,12 @@ public class Paper {
 	
 	private boolean changed = false;
 	
+	public Paper(String documentName) {
+		this.creationDate = this.lastModified = System.currentTimeMillis();
+		this.documentName = documentName;
+		this.numberOfPages = 0;
+	}
+	
 	public long getCreationDate() {
 		return creationDate;
 	}

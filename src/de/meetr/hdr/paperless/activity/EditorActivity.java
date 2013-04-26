@@ -38,7 +38,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.RelativeLayout.LayoutParams;
 
-public class WriteActivity extends Activity implements OnTouchListener {
+public class EditorActivity extends Activity implements OnTouchListener {
 	public static final int DEFAULT_WIDTH = 1240;	// 209,97mm with 150 ppi (DIN A4)
 	public static final int DEFAULT_HEIGHT = 1754;	// 297,01mm with 150 ppi (DIN A4)
 	public static final int RESOLUTION = 150;		// 150 ppi
@@ -61,7 +61,7 @@ public class WriteActivity extends Activity implements OnTouchListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_write);
+		setContentView(R.layout.activity_editor);
 		
 		this.imageView = (BitmapView) this.findViewById(R.id.imageView1);
 		this.zoomedView = (BitmapView) this.findViewById(R.id.imageView2);

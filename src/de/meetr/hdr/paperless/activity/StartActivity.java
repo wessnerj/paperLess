@@ -19,17 +19,20 @@
 
 package de.meetr.hdr.paperless.activity;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
 import de.meetr.hdr.paperless.R;
 import de.meetr.hdr.paperless.model.FileManager;
 import de.meetr.hdr.paperless.model.FileResource;
+import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.view.FileListAdapter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.renderscript.FileA3D;
 import android.view.ContextMenu;
@@ -167,7 +170,9 @@ public class StartActivity extends Activity implements OnItemClickListener {
 					public void onClick(DialogInterface dialog, int whichButton) {
 						String value = input.getEditableText().toString();
 
-						// TODO: Create new paper file
+						if (!saveNewPaper(value)) {
+							Toast.makeText(context, R.string.paper_add_failure, Toast.LENGTH_LONG).show();
+						}
 
 						updateListView();
 					}
@@ -181,6 +186,27 @@ public class StartActivity extends Activity implements OnItemClickListener {
 				});
 
 		alert.show();
+	}
+	
+	private boolean saveNewPaper(String name) {
+		// Make new Paper object
+		Paper newPaper = new Paper(name);
+		
+		// Test if file with that name already exists
+		File f = this.fileManager.getFile(this.currentPath, name);
+		if (f.exists()) {
+			// File already exists -> abort
+			return false;
+		}
+		
+		// Save to file
+		try {
+			newPaper.saveToFile(f);
+			return true;
+		} catch (Exception e) {
+			// Unexpected error -> return false
+			return false;
+		}
 	}
 	
 	private void importPdf() {
@@ -218,7 +244,19 @@ public class StartActivity extends Activity implements OnItemClickListener {
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
 		FileResource r = this.listAdapter.getItem(position);
+		
+		if (r.isDocument())
+			this.openPaper(r);
+		
 		Toast.makeText(context, "Clicked on: " + r.getName(), Toast.LENGTH_SHORT).show();
+	}
+	
+	private void openPaper(FileResource r) {
+		if (!r.isDocument())
+			return;
+		
+		Intent myIntent = new Intent(this, EditorActivity.class);
+		startActivity(myIntent);
 	}
 	
 	private void updateListView() {
