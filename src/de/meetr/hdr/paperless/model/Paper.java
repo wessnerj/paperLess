@@ -38,9 +38,19 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xmlpull.v1.XmlPullParser;
+
+import android.util.Xml;
 
 public class Paper {
 	public static final String FILENAME_EXTENSION = ".plf";
+	
+	private static final String XML_ROOT = "paperless";
+	private static final String XML_CREATION = "creationDate";
+	private static final String XML_MODIFIED = "lastModified";
+	private static final String XML_NAME = "documentName";
+	private static final String XML_NUMPAGES = "numberOfPages";
+	private static final String XML_PAGES = "pages";
 	
 	private long creationDate;
 	private long lastModified;
@@ -91,32 +101,32 @@ public class Paper {
 		
 		// Root element
 		Document doc = docBuilder.newDocument();
-		Element rootElement = doc.createElement("paperless");
+		Element rootElement = doc.createElement(XML_ROOT);
 		doc.appendChild(rootElement);
 		
 		// Meta-data
 		// CreationDate
-		Element creationDate = doc.createElement("creationDate");
+		Element creationDate = doc.createElement(XML_CREATION);
 		creationDate.appendChild(doc.createTextNode("" + this.creationDate));
 		rootElement.appendChild(creationDate);
 		
 		// LastModified (NOW)
-		Element lastModified = doc.createElement("lastModified");
+		Element lastModified = doc.createElement(XML_MODIFIED);
 		lastModified.appendChild(doc.createTextNode("" + System.currentTimeMillis()));
 		rootElement.appendChild(lastModified);
 		
 		// DocumentName
-		Element documentName = doc.createElement("documentName");
+		Element documentName = doc.createElement(XML_NAME);
 		documentName.appendChild(doc.createTextNode(this.documentName));
 		rootElement.appendChild(documentName);
 		
 		// NumberOfPages
-		Element numberOfPages = doc.createElement("numberOfPages");
+		Element numberOfPages = doc.createElement(XML_NUMPAGES);
 		numberOfPages.appendChild(doc.createTextNode("" + this.numberOfPages));
 		rootElement.appendChild(numberOfPages);
 		
 		// Order of pages
-		Element pages = doc.createElement("pages");
+		Element pages = doc.createElement(XML_PAGES);
 		// TODO: add pages
 		rootElement.appendChild(pages);
 		
@@ -139,8 +149,71 @@ public class Paper {
 		ZipEntry entry = zipFile.getEntry("meta.xml");
 		InputStream is = zipFile.getInputStream(entry);
 		
-		// TODO: ..
+		String documentName = null;
+		long creationDate = 0;
+		long lastModified = 0;
+		int numberOfPages = 0;
 		
-		return null;
+		XmlPullParser parser = Xml.newPullParser();
+		parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+		parser.setInput(is, null);
+		parser.nextTag();
+		
+		parser.require(XmlPullParser.START_TAG, null, XML_ROOT);
+		
+		while (parser.next() != XmlPullParser.END_TAG) {
+			if (parser.getEventType() != XmlPullParser.START_TAG) {
+	            continue;
+	        }
+			
+			final String name = parser.getName();
+			
+			if (name.equals(XML_NAME)) {
+				if (parser.next() == XmlPullParser.TEXT)
+					documentName = parser.getText();
+			} else if (name.equals(XML_CREATION)) {
+				if (parser.next() == XmlPullParser.TEXT)
+					creationDate = Long.parseLong(parser.getText());
+			} else if (name.equals(XML_MODIFIED)) {
+				if (parser.next() == XmlPullParser.TEXT)
+					lastModified = Long.parseLong(parser.getText());
+			} else if (name.equals(XML_NUMPAGES)) {
+				if (parser.next() == XmlPullParser.TEXT)
+					numberOfPages = Integer.parseInt(parser.getText());
+			} else {
+				skip(parser);
+				continue;
+			}
+			
+			parser.nextTag();
+		}
+		
+		if (null == documentName)
+			return null;
+		
+		Paper p = new Paper(documentName);
+		p.creationDate = creationDate;
+		p.lastModified = lastModified;
+		p.numberOfPages = numberOfPages;	
+		
+		return p;
 	}
+	
+	private static void skip(XmlPullParser parser) throws Exception {
+		if (parser.getEventType() != XmlPullParser.START_TAG) {
+			throw new IllegalStateException();
+		}
+		int depth = 1;
+		while (depth != 0) {
+			switch (parser.next()) {
+			case XmlPullParser.END_TAG:
+				depth--;
+				break;
+			case XmlPullParser.START_TAG:
+				depth++;
+				break;
+			}
+		}
+	}
+	
 }

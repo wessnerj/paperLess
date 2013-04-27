@@ -37,7 +37,7 @@ public class IntentHelper {
         return instance;
     }
 
-    public static void addObjectForKey(Object object, String key) {
+    public static void addObjectForKey(String key, Object object) {
         getInstance().hash.put(key, object);
     }
     

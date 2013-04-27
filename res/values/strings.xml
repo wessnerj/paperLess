@@ -18,5 +18,6 @@
     <string name="delete_sure">Are you sure, you want to delete %s?</string>
     <string name="enter_paper_name">Enter name for the new paper.</string>
     <string name="paper_add_failure">New paper could not be created.</string>
+    <string name="paper_open_failure">The selected Paper could not be opened.</string>
 
 </resources>

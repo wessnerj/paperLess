@@ -23,6 +23,7 @@ import java.io.File;
 
 public class FileResource implements Comparable<FileResource> {
 	private File file;
+	private Paper paper = null;
 	
 	public FileResource(File f) {
 		this.file = f;
@@ -42,6 +43,26 @@ public class FileResource implements Comparable<FileResource> {
 	
 	public boolean isDocument() {
 		return (!this.file.isDirectory() && this.file.getName().endsWith(Paper.FILENAME_EXTENSION));
+	}
+	
+	public Paper getPaper() {
+		if (this.isDocument() && (null != this.paper || this.openPaper()))
+			return this.paper;
+		
+		return null;
+	}
+	
+	private boolean openPaper() {
+		if (!this.isDocument())
+			return false;
+		
+		try {
+			this.paper = Paper.openFile(this.file);
+			return true;
+		} catch (Exception e) {
+			this.paper = null;
+			return false;
+		}
 	}
 
 	@Override

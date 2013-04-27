@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.meetr.hdr.paperless.R;
+import de.meetr.hdr.paperless.misc.IntentHelper;
 import de.meetr.hdr.paperless.model.FileManager;
 import de.meetr.hdr.paperless.model.FileResource;
 import de.meetr.hdr.paperless.model.Paper;
@@ -252,9 +253,14 @@ public class StartActivity extends Activity implements OnItemClickListener {
 	}
 	
 	private void openPaper(FileResource r) {
-		if (!r.isDocument())
-			return;
+		Paper p = r.getPaper();
 		
+		if (null == p) {
+			Toast.makeText(context, R.string.paper_open_failure, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		
+		IntentHelper.addObjectForKey("selectedPaper", p);
 		Intent myIntent = new Intent(this, EditorActivity.class);
 		startActivity(myIntent);
 	}

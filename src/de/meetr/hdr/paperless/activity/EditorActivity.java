@@ -20,6 +20,9 @@
 package de.meetr.hdr.paperless.activity;
 
 import de.meetr.hdr.paperless.R;
+import de.meetr.hdr.paperless.misc.IntentHelper;
+import de.meetr.hdr.paperless.model.FileResource;
+import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.paper.PaperFactory;
 import de.meetr.hdr.paperless.view.BitmapView;
 import android.os.Bundle;
@@ -110,6 +113,10 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	    this.imageView.setOnTouchListener(this);
 	    this.frameView.setOnTouchListener(this);
 	    this.zoomedView.setOnTouchListener(this);
+	    
+	    Paper p = (Paper) IntentHelper.getObjectForKey("selectedPaper");
+	    
+	    Log.d("EditorActivity", p.getDocumentName());
 	}
 	
 	public void onStart() {
