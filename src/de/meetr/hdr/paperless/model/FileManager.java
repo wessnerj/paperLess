@@ -78,6 +78,23 @@ public class FileManager {
 		return !file.exists();
 	}
 	
+	public String changeDirectory(FileResource f) {
+		final File dir = f.getFile();
+		
+		if (!dir.exists() || !dir.isDirectory())
+			return null;
+		
+		String dirPath = dir.getAbsolutePath();
+		if (!dirPath.endsWith("/"))
+			dirPath += "/";
+		
+		final String paperRootPath = this.externalDirPath + "/" + PAPER_DIR;
+		if (!dirPath.startsWith(paperRootPath))
+			return null;
+		
+		return dirPath.substring(paperRootPath.length());
+	}
+	
 	public List<FileResource> getContents(String path) throws Exception {
 		String strDirPath = this.externalDirPath + "/";
 		
@@ -92,6 +109,10 @@ public class FileManager {
 			throw new Exception("Directory not readable");
 		
 		List<FileResource> items = new ArrayList<FileResource>();
+		if (!directory.getAbsolutePath().equals(this.externalDirPath + "/" + PAPER_DIR)) {
+			items.add(new FileResource(directory.getParentFile(), ".."));
+		}
+		
 		for (final File f : directory.listFiles()) {
 			if (f.getName().startsWith(".") && !f.getName().equals(".."))
 				continue;

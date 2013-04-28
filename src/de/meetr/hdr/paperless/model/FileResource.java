@@ -24,13 +24,21 @@ import java.io.File;
 public class FileResource implements Comparable<FileResource> {
 	private File file;
 	private Paper paper = null;
+	private String name = null;
 	
 	public FileResource(File f) {
 		this.file = f;
 	}
 	
+	public FileResource(File f, String name) {
+		this.file = f;
+		this.name = name;
+	}
+	
 	public String getName() {
-		return this.file.getName();
+		if (null == this.name)
+			return this.file.getName();
+		return this.name;
 	}
 	
 	public File getFile() {
@@ -68,8 +76,12 @@ public class FileResource implements Comparable<FileResource> {
 	@Override
 	public int compareTo(FileResource another) {
 		if (this.file.isDirectory()) {
-			if (another.file.isDirectory())
-				return this.file.getName().compareTo(another.file.getName());
+			if (another.file.isDirectory()) {
+				if (another.getName().equals(".."))
+					return +1;
+				else
+					return this.file.getName().compareTo(another.file.getName());
+			}
 			
 			return -1;
 		} else {

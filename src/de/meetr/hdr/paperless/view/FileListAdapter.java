@@ -66,12 +66,6 @@ public class FileListAdapter extends ArrayAdapter<FileResource> {
 			holder.image.setImageResource(R.drawable.icon_folder);
 		else
 			holder.image.setImageResource(R.drawable.icon_document);
-//		if (s.startsWith("Windows7") || s.startsWith("iPhone")
-//				|| s.startsWith("Solaris")) {
-//			holder.image.setImageResource(R.drawable.no);
-//		} else {
-//			holder.image.setImageResource(R.drawable.ok);
-//		}
 
 		return rowView;
 	}

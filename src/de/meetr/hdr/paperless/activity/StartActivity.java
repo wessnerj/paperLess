@@ -311,8 +311,19 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		// Open paper in editorView, if item is document
 		if (r.isDocument())
 			this.openPaper(r);
-		
-		// TODO: Change directory, if item is directory
+		else {
+			// Change directory, if item is directory
+			String newPath = this.fileManager.changeDirectory(r);
+			if (null == newPath) {
+				// Something went wrong
+				Toast.makeText(context, R.string.folder_change_failure, Toast.LENGTH_LONG).show();
+				return;
+			} else {
+				// Change path and update view
+				this.currentPath = newPath;
+				this.updateListView();
+			}
+		}
 	}
 	
 	/**
