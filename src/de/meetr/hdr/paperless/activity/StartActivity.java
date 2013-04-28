@@ -24,18 +24,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.meetr.hdr.paperless.R;
+
 import de.meetr.hdr.paperless.misc.IntentHelper;
 import de.meetr.hdr.paperless.model.FileManager;
 import de.meetr.hdr.paperless.model.FileResource;
 import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.view.FileListAdapter;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.renderscript.FileA3D;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -45,25 +46,40 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 
+/**
+ * Startup Activity (Filebrowser)
+ * 
+ * @author Joseph Wessner <joseph@wessner.org>
+ */
 public class StartActivity extends Activity implements OnItemClickListener {
+	/**
+	 * Final reference to this, can be used in subclasses.
+	 */
 	final Context context = this;
 	private String currentPath = "/";
 	
-	private FileManager fileManager;
+	/**
+	 * FileManager is used for file access.
+	 */
+	private FileManager fileManager = null;
+	/**
+	 * Adapter for file listView.
+	 */
 	private FileListAdapter listAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		// Call parent onCreate and set layout
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_start);
 		
+		// Init fileManager
 		this.fileManager = new FileManager(this);
-		
+				
 		// Set Adapter for GridView
 		this.updateListView();
 		final GridView listview = (GridView) findViewById(R.id.gridView1);	
@@ -121,9 +137,13 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		}
 	}
 	
+	/**
+	 * This method will ask the user for a folder name and afterwards create the
+	 * new folder.
+	 */
 	private void addFolder() {
+		// Setup AlertDialog for name request
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
 		alert.setTitle(R.string.add_folder);
 		alert.setMessage(R.string.enter_folder_name);
 
@@ -131,34 +151,46 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		final EditText input = new EditText(this);
 		alert.setView(input);
 
+		// Add action for "OK" button
 		alert.setPositiveButton(R.string.ok,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						String value = input.getEditableText().toString();
+						// Get the value from input
+						final String value = input.getEditableText().toString();
 						
+						// Try to add new folder
 						if (fileManager.addFolder(currentPath + "/" + value)) {
+							// Display success message
 							Toast.makeText(context, R.string.folder_add_success, Toast.LENGTH_SHORT).show();
 						} else {
+							// Display error message
 							Toast.makeText(context, R.string.folder_add_failure, Toast.LENGTH_LONG).show();
 						}
 						
+						// Update the listView (display new folder)
 						updateListView();
 					}
 				});
 
+		// Add action for "Cancel" button
 		alert.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						// Canceled.
+						// Canceled -> do nothing
 					}
 				});
 
+		// Display the dialog
 		alert.show();
 	}
 	
+	/**
+	 * This method will ask the user for a paper name and afterwards create the
+	 * new paper.
+	 */
 	private void addPaper() {
+		// Setup AlertDialog for name request
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
 		alert.setTitle(R.string.add_paper);
 		alert.setMessage(R.string.enter_paper_name);
 
@@ -166,29 +198,43 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		final EditText input = new EditText(this);
 		alert.setView(input);
 
+		// Add action for "OK" button
 		alert.setPositiveButton(R.string.ok,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						String value = input.getEditableText().toString();
+						// Get the value from input
+						final String value = input.getEditableText().toString();
 
 						if (!saveNewPaper(value)) {
+							// Display error message
 							Toast.makeText(context, R.string.paper_add_failure, Toast.LENGTH_LONG).show();
 						}
 
+						// Update the listView (display new paper)
 						updateListView();
+						
+						// TODO: switch to editorActivity
 					}
 				});
 
+		// Add action for "Cancel" button
 		alert.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						// Canceled.
+						// Canceled -> do nothing
 					}
 				});
-
+		
+		// Display the dialog
 		alert.show();
 	}
 	
+	/**
+	 * Saves a new paper with given name.
+	 * 
+	 * @param name	documentName of the new paper
+	 * @return		true, if the paper could be created.
+	 */
 	private boolean saveNewPaper(String name) {
 		// Make new Paper object
 		Paper newPaper = new Paper(name);
@@ -210,34 +256,50 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		}
 	}
 	
+	/**
+	 * Import a PDF file as new paper.
+	 * TODO: implement
+	 */
 	private void importPdf() {
 		Toast.makeText(this, "Import PDF", Toast.LENGTH_SHORT).show();
 	}
 	
+	/**
+	 * Deletes a selected item.
+	 * 
+	 * @param position of the selected item
+	 */
 	private void deleteItem(int position) {
-		final FileResource r = this.listAdapter.getItem(position);
+		// Get corresponding FileResource
+		final FileResource selectedResource = this.listAdapter.getItem(position);
 
+		// Build "Are you sure?" dialog
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setTitle(R.string.delete);
 		alert.setMessage(String.format(getString(R.string.delete_sure),
-				r.getName()));
+				selectedResource.getName()));
 
+		// Add action for "OK" button
 		alert.setPositiveButton(R.string.ok,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						fileManager.deleteResource(r);
+						// Delete the item
+						fileManager.deleteResource(selectedResource);
 						
+						// Update listView
 						updateListView();
 					}
 				});
-
+		
+		// Add action for "Cancel" button
 		alert.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
-						// Canceled.
+						// Canceled -> do nothing
 					}
 				});
 
+		// Display dialog
 		alert.show();
 	}
 
@@ -246,34 +308,50 @@ public class StartActivity extends Activity implements OnItemClickListener {
 			long id) {
 		FileResource r = this.listAdapter.getItem(position);
 		
+		// Open paper in editorView, if item is document
 		if (r.isDocument())
 			this.openPaper(r);
 		
-		Toast.makeText(context, "Clicked on: " + r.getName(), Toast.LENGTH_SHORT).show();
+		// TODO: Change directory, if item is directory
 	}
 	
+	/**
+	 * Opens the given file resource with the EditorActivity
+	 * 
+	 * @param r	FileResource to open
+	 */
 	private void openPaper(FileResource r) {
 		Paper p = r.getPaper();
 		
 		if (null == p) {
+			// Opening the paper failed -> display error
 			Toast.makeText(context, R.string.paper_open_failure, Toast.LENGTH_SHORT).show();
 			return;
 		}
 		
+		// Pass the paper object to the editor.
 		IntentHelper.addObjectForKey("selectedPaper", p);
+		
+		// Switch to EditorActivity
 		Intent myIntent = new Intent(this, EditorActivity.class);
 		startActivity(myIntent);
 	}
 	
+	/**
+	 * Updates the listView
+	 */
 	private void updateListView() {
 		final GridView listview = (GridView) findViewById(R.id.gridView1);	
 		
+		// Get the item from FileManager
 		List<FileResource> items = new LinkedList<FileResource>();
 		try {
 			items = this.fileManager.getContents(this.currentPath);
 		} catch (Exception e) {
 			Toast.makeText(context, "Something went wrong. Please try again.", Toast.LENGTH_SHORT).show();
 		}
+		
+		// Set new listAdapter for listView
 		this.listAdapter = new FileListAdapter(this, items.toArray(new FileResource[0]));
 		listview.setAdapter(this.listAdapter);
 	}
