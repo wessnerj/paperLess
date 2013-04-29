@@ -46,11 +46,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlpull.v1.XmlPullParser;
 
-import de.schlichtherle.truezip.file.TConfig;
-import de.schlichtherle.truezip.file.TFile;
-import de.schlichtherle.truezip.file.TFileOutputStream;
-import de.schlichtherle.truezip.fs.FsOutputOption;
-
 import android.util.Xml;
 
 public class Paper {
@@ -120,23 +115,11 @@ public class Paper {
 		return p;
 	}
 	
-	public OutputStream getOutputStreamForPage(long identifier, int layer) throws Exception {
-		TFile tFile = new TFile(this.file.getAbsolutePath() + "/" + identifier + "_" + layer + ".png");
-
-		// This should obtain the global configuration.
-		TConfig config = TConfig.get();
-		config.setOutputPreferences(config.getOutputPreferences().set(FsOutputOption.GROW));
-		TFileOutputStream out = new TFileOutputStream(tFile);
+	public OutputStream getOutputStreamForPage(long identifier, int layer) throws Exception {		
+		ZipOutputStream os = new ZipOutputStream(new FileOutputStream(this.file));
+		os.putNextEntry(new ZipEntry(identifier + "_" + layer + ".png"));
 		
-//		config.setOutputPreferences(
-//			config.getOutputPreferences().set(FsOutputOption.GROW));
-
-//		TFileOutputStream out = new TFileOutputStream(file);
-//
-//		ZipOutputStream os = new ZipOutputStream(new FileOutputStream(this.file));
-//		os.putNextEntry(new ZipEntry(identifier + "_" + layer + ".png"));
-		
-		return out;
+		return os;
 	}
 
 	public void saveToFile(File f) throws ParserConfigurationException, IOException, TransformerException {
