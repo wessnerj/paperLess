@@ -15,44 +15,72 @@
         android:layout_marginRight="4dp"
         android:layout_marginTop="4dp"
         android:layout_weight="1" >
+        
+        <TextView
+            android:id="@+id/noPageTextView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="@string/last_page_reached"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#E3E3E3" />
 
         <de.meetr.hdr.paperless.view.BitmapView
-            android:id="@+id/imageView1"
+            android:id="@+id/mainPaperView"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_alignParentRight="true"
             android:layout_alignParentTop="true"
             android:layout_margin="0dp"
-            android:layout_weight="1"
             android:background="#444444"
             android:padding="4dp"
             android:scaleType="matrix"
-            android:src="@drawable/ic_launcher" />
+            android:src="@drawable/ic_launcher"
+            android:visibility="invisible" />
 
         <View
-            android:id="@+id/view1"
+            android:id="@+id/zoomedPaperFrame"
             android:layout_width="300dp"
             android:layout_height="100dp"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="false"
             android:layout_marginLeft="200dp"
             android:layout_marginTop="100dp"
-            android:background="@drawable/frame" />
+            android:background="@drawable/frame"
+            android:visibility="invisible" />
 
     </RelativeLayout>
 
-    <de.meetr.hdr.paperless.view.BitmapView
-        android:id="@+id/imageView2"
-        android:layout_width="fill_parent"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="4dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
-        android:layout_marginTop="2dp"
-        android:layout_weight="1"
-        android:background="#444444"
-        android:padding="4dp"
-        android:scaleType="matrix"
-        android:src="@drawable/ic_launcher" />
+        android:layout_weight="1" >
+        
+        <TextView
+            android:id="@+id/noPageTextView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="@string/last_page_reached"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#E3E3E3" />
+
+        <de.meetr.hdr.paperless.view.BitmapView
+            android:id="@+id/zoomedPaperView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="2dp"
+            android:background="#444444"
+            android:padding="4dp"
+            android:scaleType="matrix"
+            android:src="@drawable/ic_launcher" 
+            android:visibility="invisible" />
+
+    </RelativeLayout>
 
 </LinearLayout>

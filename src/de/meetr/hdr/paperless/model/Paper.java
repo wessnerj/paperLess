@@ -20,9 +20,15 @@
 package de.meetr.hdr.paperless.model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -40,6 +46,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xmlpull.v1.XmlPullParser;
 
+import de.schlichtherle.truezip.file.TConfig;
+import de.schlichtherle.truezip.file.TFile;
+import de.schlichtherle.truezip.file.TFileOutputStream;
+import de.schlichtherle.truezip.fs.FsOutputOption;
+
 import android.util.Xml;
 
 public class Paper {
@@ -56,6 +67,10 @@ public class Paper {
 	private long lastModified;
 	private String documentName;
 	private int numberOfPages;
+	
+	private List<Page> pages = new ArrayList<Page>();
+	
+	private File file;
 	
 	private boolean changed = false;
 	
@@ -92,6 +107,36 @@ public class Paper {
 	public void setNumberOfPages(int numberOfPages) {
 		this.numberOfPages = numberOfPages;
 		this.changed = true;
+	}
+	
+	public Page addNewPage(int w, int h) {
+		return this.addNewPage(w, h, this.numberOfPages+1);
+	}
+	
+	public Page addNewPage(int w, int h, int pageNumber) {
+		Page p = new Page(this, w, h);
+		this.pages.add(p);
+		
+		return p;
+	}
+	
+	public OutputStream getOutputStreamForPage(long identifier, int layer) throws Exception {
+		TFile tFile = new TFile(this.file.getAbsolutePath() + "/" + identifier + "_" + layer + ".png");
+
+		// This should obtain the global configuration.
+		TConfig config = TConfig.get();
+		config.setOutputPreferences(config.getOutputPreferences().set(FsOutputOption.GROW));
+		TFileOutputStream out = new TFileOutputStream(tFile);
+		
+//		config.setOutputPreferences(
+//			config.getOutputPreferences().set(FsOutputOption.GROW));
+
+//		TFileOutputStream out = new TFileOutputStream(file);
+//
+//		ZipOutputStream os = new ZipOutputStream(new FileOutputStream(this.file));
+//		os.putNextEntry(new ZipEntry(identifier + "_" + layer + ".png"));
+		
+		return out;
 	}
 
 	public void saveToFile(File f) throws ParserConfigurationException, IOException, TransformerException {
@@ -142,6 +187,8 @@ public class Paper {
 		transformer.transform(source, result);
 		
 		os.close();
+		
+		this.file = f;
 	}
 	
 	public static Paper openFile(File f) throws Exception {
@@ -194,7 +241,8 @@ public class Paper {
 		Paper p = new Paper(documentName);
 		p.creationDate = creationDate;
 		p.lastModified = lastModified;
-		p.numberOfPages = numberOfPages;	
+		p.numberOfPages = numberOfPages;
+		p.file = f;
 		
 		return p;
 	}

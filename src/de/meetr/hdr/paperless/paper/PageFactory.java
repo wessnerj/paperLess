@@ -19,12 +19,13 @@
 
 package de.meetr.hdr.paperless.paper;
 
+import de.meetr.hdr.paperless.model.Page;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 
-public class PaperFactory {
+public class PageFactory {
 	public enum PaperType {
 		SQUARED, LINED, BLANK
 	}
@@ -49,7 +50,7 @@ public class PaperFactory {
 	/**
 	 * Singleton instance
 	 */
-	private static PaperFactory instance = null;
+	private static PageFactory instance = null;
 	
 	/**
 	 * Paint used for painting
@@ -59,7 +60,7 @@ public class PaperFactory {
 	/**
 	 * Private constructor to avoid calling from outside.
 	 */
-	private PaperFactory() {
+	private PageFactory() {
 		this.paint = new Paint();
 		this.paint.setColor(Color.GRAY);
 		this.paint.setStrokeWidth(1);
@@ -72,9 +73,9 @@ public class PaperFactory {
 	 * 
 	 * @return
 	 */
-	private static PaperFactory getInstance() {
+	private static PageFactory getInstance() {
 		if (null == instance) {
-			instance = new PaperFactory();
+			instance = new PageFactory();
 		}
 		
 		return instance;

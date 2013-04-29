@@ -20,5 +20,10 @@
     <string name="paper_add_failure">New paper could not be created.</string>
     <string name="paper_open_failure">The selected Paper could not be opened.</string>
     <string name="folder_change_failure">Entering the directory failed.</string>
+    <string name="last_page_reached">There is no further page!</string>
+    <string name="add_page">Add new page</string>
+    <string name="papertype_lined">lined</string>
+    <string name="papertype_blank">blank</string>
+    <string name="papertype_squared">squared</string>
 
 </resources>

@@ -19,7 +19,46 @@
 
 package de.meetr.hdr.paperless.model;
 
+import java.io.OutputStream;
+import java.util.zip.ZipOutputStream;
+
+import android.graphics.Bitmap;
+
 public class Page {
-	private int numberOfLayers = 0;
-	private boolean hasChanges = false;
+	private Paper paper;
+	private long identifier;
+	private int width;
+	private int height;
+	
+	public Page(Paper p, int w, int h) {
+		this.paper = p;
+		this.identifier = System.currentTimeMillis();
+		this.width = w;
+		this.height = h;
+	}
+	
+	public Page(Paper p, long id, int w, int h) {
+		this.paper = p;
+		this.identifier = id;
+		this.width = w;
+		this.height = h;
+	}
+	
+	public long getIdentifier() {
+		return this.identifier;
+	}
+	
+	public int getWidth() {
+		return this.width;
+	}
+	
+	public int getHeight() {
+		return this.height;
+	}
+	
+	public void saveLayer(Bitmap b, int layer) throws Exception {
+		OutputStream os = this.paper.getOutputStreamForPage(this.identifier, layer);
+		b.compress(Bitmap.CompressFormat.PNG, 100, os);
+		os.close();
+	}
 }
