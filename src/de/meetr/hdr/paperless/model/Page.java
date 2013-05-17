@@ -20,27 +20,20 @@
 package de.meetr.hdr.paperless.model;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.util.zip.ZipOutputStream;
 
 import android.graphics.Bitmap;
 
 public class Page {
 	private Paper paper;
 	private long identifier;
+	private int number;
 	private int width;
 	private int height;
 	
-	public Page(Paper p, int w, int h) {
-		this.paper = p;
-		this.identifier = System.currentTimeMillis();
-		this.width = w;
-		this.height = h;
-	}
-	
-	public Page(Paper p, long id, int w, int h) {
+	public Page(Paper p, long id, int n, int w, int h) {
 		this.paper = p;
 		this.identifier = id;
+		this.number = n;
 		this.width = w;
 		this.height = h;
 	}
@@ -64,6 +57,6 @@ public class Page {
 		
 		outStream.close(); // has no effect on ByteArrayOutputStream
 		
-		this.paper.savePage(100, layer, outStream.toByteArray());
+		this.paper.savePage(this.identifier, layer, outStream.toByteArray());
 	}
 }

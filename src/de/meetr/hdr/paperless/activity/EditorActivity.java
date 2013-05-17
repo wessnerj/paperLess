@@ -29,6 +29,7 @@ import de.meetr.hdr.paperless.view.BitmapView;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -302,6 +303,8 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	private void addPage(PageFactory.PaperType type) {
 		this.closePage();
 		
+		ProgressDialog dialog = ProgressDialog.show(this, getString(R.string.saving), getString(R.string.wait) + "adding...", true);
+		
 		this.backgroundBitmap = PageFactory.getDINA4Page(type);
 		this.foregroundBitmap = Bitmap.createBitmap(
 				this.backgroundBitmap.getWidth(),
@@ -322,18 +325,24 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		
 		this.mainPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperView.setVisibility(View.VISIBLE);
+		
+		dialog.dismiss();
 	}
 	
 	private void closePage() {
 		if (null == this.currentPage)
 			return;
 		
+		ProgressDialog dialog = ProgressDialog.show(this, getString(R.string.saving), getString(R.string.wait), true);
+
 		try {
 			this.currentPage.saveLayer(this.backgroundBitmap, 0);
 			this.currentPage.saveLayer(this.foregroundBitmap, 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		dialog.dismiss();
 		
 		this.clearBitmaps();
 	}

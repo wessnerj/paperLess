@@ -42,7 +42,6 @@ public class Paper {
 	private static final String PAGE_FIELD_NUMBER = "pageNumber";
 	private static final String PAGE_FIELD_WIDTH = "width";
 	private static final String PAGE_FIELD_HEIGHT = "height";
-	private static final String PAGE_FIELD_LAYERS = "numLayers";
 	
 	private static final String BITMAP_TABLE = "bitmaps";
 	private static final String BITMAP_FIELD_ID = "_id";
@@ -104,24 +103,100 @@ public class Paper {
 			return c.getString(c.getColumnIndex(META_FIELD_VALUE));
 		}
 		
+		c.close();
 		return null;
+	}
+	
+	private void setMetaInformation(String key, String value) {
+		// Delete old information (if any)
+		this.delMetaInformation(key);
+		
+		ContentValues values = new ContentValues(); 
+		values.put(META_FIELD_KEY, key);
+		values.put(META_FIELD_VALUE, value);
+		this.db.insert(META_TABLE, null, values);
+	}
+	
+	private void delMetaInformation(String key) {
+		final String where = META_FIELD_KEY + "=?";
+		final String[] whereArgs = { key };
+		this.db.delete(META_TABLE, where, whereArgs);
+	}
+	
+	public Page getPage(int pageNumber) {
+		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
+		final String where = PAGE_FIELD_NUMBER + "=?";
+		final String[] whereArgs = { ""+pageNumber };
+		
+		Cursor c = db.query(PAGE_TABLE, fields, where, whereArgs, null, null, null, "1");
+		c.moveToFirst();
+		
+		if (c.isAfterLast())
+			return null;
+		
+		final long id = c.getLong(c.getColumnIndex(PAGE_FIELD_ID));
+		final int n = c.getInt(c.getColumnIndex(PAGE_FIELD_NUMBER));
+		final int w = c.getInt(c.getColumnIndex(PAGE_FIELD_WIDTH));
+		final int h = c.getInt(c.getColumnIndex(PAGE_FIELD_HEIGHT));
+		c.close();
+		
+		Page p = new Page(this, id, n, w, h);
+		return p;
 	}
 	
 	public Page addNewPage(int w, int h) {
-		return null;
-//		return this.addNewPage(w, h, this.numberOfPages+1);
+		final int currentNumberOfPages = this.getNumberOfPages();
+		if (0 > currentNumberOfPages)
+			return null;
+		
+		return this.addNewPage(w, h, currentNumberOfPages+1);
 	}
 	
 	public Page addNewPage(int w, int h, int pageNumber) {
-		return null;
-//		Page p = new Page(this, w, h);
-//		this.pages.add(p);
-//		
-//		return p;
+		// Add new page to database
+		// First check if pageNumber already exists
+		if (null != this.getPage(pageNumber))
+			return null;	// pageNumber already exists
+		
+		// Add new page to page table
+		ContentValues values = new ContentValues(); 
+		values.put(PAGE_FIELD_NUMBER, pageNumber);
+		values.put(PAGE_FIELD_WIDTH, w);
+		values.put(PAGE_FIELD_HEIGHT, h);
+		
+		// Insert
+		final long id = db.insert(PAGE_TABLE, null, values);
+		
+		if (0 > id)
+			return null; // Something went wrong
+		
+		// Increment the page count by one
+		int numPages = this.getNumberOfPages();
+		this.setMetaInformation(META_KEY_NUMPAGES, ""+(numPages+1));
+		
+		// Update modified date
+		this.setMetaInformation(META_KEY_MODIFIED, ""+System.currentTimeMillis());
+		
+		return new Page(this, id, pageNumber, w, h);
 	}
 	
 	public void savePage(long identifier, int layer, byte[] content) {
-
+		// Delete old layer data (if existing)
+		this.deleteLayer(identifier, layer);
+		
+		// Insert/Save data
+		ContentValues values = new ContentValues(); 
+		values.put(BITMAP_FIELD_PAGE, identifier);
+		values.put(BITMAP_FIELD_LAYER, layer);
+		values.put(BITMAP_FIELD_DATA, content);
+		
+		db.insert(BITMAP_TABLE, null, values);
+	}
+	
+	public void deleteLayer(long pageId, int layer) {
+		final String where = BITMAP_FIELD_PAGE + "=? AND " + BITMAP_FIELD_LAYER + "=?";
+		final String[] whereArgs = { ""+pageId, ""+layer };
+		this.db.delete(BITMAP_TABLE, where, whereArgs);
 	}
 	
 	/**
@@ -183,10 +258,9 @@ public class Paper {
 			// Pages table
 			db.execSQL("CREATE TABLE " + PAGE_TABLE + "("
 					+ PAGE_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ PAGE_FIELD_NUMBER + " INTEGER," 
+					+ PAGE_FIELD_NUMBER + " INTEGER UNIQUE," 
 					+ PAGE_FIELD_WIDTH + " INTEGER,"
-					+ PAGE_FIELD_HEIGHT + " INTEGER,"
-					+ PAGE_FIELD_LAYERS + " INTEGER"
+					+ PAGE_FIELD_HEIGHT + " INTEGER"
 					+ ")");
 			
 			// Bitmaps table

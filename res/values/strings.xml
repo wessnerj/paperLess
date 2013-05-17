@@ -25,5 +25,7 @@
     <string name="papertype_lined">lined</string>
     <string name="papertype_blank">blank</string>
     <string name="papertype_squared">squared</string>
+    <string name="saving">Saving</string>
+    <string name="wait">Please wait ..</string>
 
 </resources>

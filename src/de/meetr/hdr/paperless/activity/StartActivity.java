@@ -235,8 +235,7 @@ public class StartActivity extends Activity implements OnItemClickListener {
 	 * @param name	documentName of the new paper
 	 * @return		true, if the paper could be created.
 	 */
-	private boolean saveNewPaper(String name) {
-		
+	private boolean saveNewPaper(String name) {	
 		// Test if file with that name already exists
 		File f = this.fileManager.getFile(this.currentPath, name);
 		if (f.exists()) {
@@ -250,6 +249,8 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		if (null == newPaper)
 			return false;
 		
+		// Close the new Paper as we do not open it immediatly
+		newPaper.close();
 		return true;
 	}
 	
