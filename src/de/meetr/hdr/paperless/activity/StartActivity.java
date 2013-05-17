@@ -236,8 +236,6 @@ public class StartActivity extends Activity implements OnItemClickListener {
 	 * @return		true, if the paper could be created.
 	 */
 	private boolean saveNewPaper(String name) {
-		// Make new Paper object
-		Paper newPaper = new Paper(name);
 		
 		// Test if file with that name already exists
 		File f = this.fileManager.getFile(this.currentPath, name);
@@ -246,14 +244,13 @@ public class StartActivity extends Activity implements OnItemClickListener {
 			return false;
 		}
 		
-		// Save to file
-		try {
-			newPaper.saveToFile(f);
-			return true;
-		} catch (Exception e) {
-			// Unexpected error -> return false
+		// Make new Paper object
+		Paper newPaper = Paper.createNewPaperFile(f, name);
+		
+		if (null == newPaper)
 			return false;
-		}
+		
+		return true;
 	}
 	
 	/**

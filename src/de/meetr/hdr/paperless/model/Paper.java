@@ -20,231 +20,213 @@
 package de.meetr.hdr.paperless.model;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xmlpull.v1.XmlPullParser;
-
-import android.util.Xml;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 public class Paper {
 	public static final String FILENAME_EXTENSION = ".plf";
 	
-	private static final String XML_ROOT = "paperless";
-	private static final String XML_CREATION = "creationDate";
-	private static final String XML_MODIFIED = "lastModified";
-	private static final String XML_NAME = "documentName";
-	private static final String XML_NUMPAGES = "numberOfPages";
-	private static final String XML_PAGES = "pages";
+	private static final String META_TABLE = "meta";
+	private static final String META_FIELD_KEY = "key";
+	private static final String META_FIELD_VALUE = "value";
 	
-	private long creationDate;
-	private long lastModified;
-	private String documentName;
-	private int numberOfPages;
+	private static final String META_KEY_NAME = "documentName";
+	private static final String META_KEY_NUMPAGES = "numberOfPages";
+	private static final String META_KEY_CREATED = "created";
+	private static final String META_KEY_MODIFIED = "modified";
 	
-	private List<Page> pages = new ArrayList<Page>();
+	private static final String PAGE_TABLE = "pages";
+	private static final String PAGE_FIELD_ID = "_id";
+	private static final String PAGE_FIELD_NUMBER = "pageNumber";
+	private static final String PAGE_FIELD_WIDTH = "width";
+	private static final String PAGE_FIELD_HEIGHT = "height";
+	private static final String PAGE_FIELD_LAYERS = "numLayers";
 	
-	private File file;
+	private static final String BITMAP_TABLE = "bitmaps";
+	private static final String BITMAP_FIELD_ID = "_id";
+	private static final String BITMAP_FIELD_PAGE = "page_id";
+	private static final String BITMAP_FIELD_LAYER = "layer";
+	private static final String BITMAP_FIELD_DATA = "data";
 	
-	private boolean changed = false;
+	/**
+	 * Sqlite database where the data is stored.
+	 */
+	private SQLiteDatabase db = null;
 	
-	public Paper(String documentName) {
-		this.creationDate = this.lastModified = System.currentTimeMillis();
-		this.documentName = documentName;
-		this.numberOfPages = 0;
+	public Paper(SQLiteDatabase db) {
+		this.db = db;
 	}
 	
-	public long getCreationDate() {
-		return creationDate;
+	/**
+	 * Closes the opened file
+	 */
+	public void close() {
+		if (null != this.db)
+			this.db.close();
 	}
-	public void setCreationDate(long creationDate) {
-		this.creationDate = creationDate;
-		this.changed = true;
-	}
-	public long getLastModified() {
-		return lastModified;
-	}
-	public void setLastModified(long lastModified) {
-		this.lastModified = lastModified;
-		this.changed = true;
-	}
-	public String getDocumentName() {
-		return documentName;
-	}
-	public void setDocumentName(String documentName) {
-		this.documentName = documentName;
-		this.changed = true;
-	}
+	
+	/**
+	 * Get the number of pages.
+	 * 
+	 * @return
+	 */
 	public int getNumberOfPages() {
-		return numberOfPages;
+		final String numberStr = this.getMetaInformation(META_KEY_NUMPAGES);
+		
+		if (null == numberStr)
+			return 0;
+		
+		try {
+			return Integer.parseInt(numberStr);
+		}
+		catch (Exception e) {
+			return -1;
+		}
 	}
-	public void setNumberOfPages(int numberOfPages) {
-		this.numberOfPages = numberOfPages;
-		this.changed = true;
+	
+	/**
+	 * Get the value for specified key from the meta info table.
+	 * 
+	 * @param key
+	 * @return value for key
+	 */
+	private String getMetaInformation(String key) {
+		final String[] fields = { META_FIELD_VALUE };
+		final String where = META_FIELD_KEY + " = ?";
+		final String[] whereArgs = { key };
+		
+		Cursor c = db.query(META_TABLE, fields, where, whereArgs, null, null, null, "1");
+		c.moveToFirst();
+		
+		if (!c.isAfterLast()) {
+			return c.getString(c.getColumnIndex(META_FIELD_VALUE));
+		}
+		
+		return null;
 	}
 	
 	public Page addNewPage(int w, int h) {
-		return this.addNewPage(w, h, this.numberOfPages+1);
+		return null;
+//		return this.addNewPage(w, h, this.numberOfPages+1);
 	}
 	
 	public Page addNewPage(int w, int h, int pageNumber) {
-		Page p = new Page(this, w, h);
-		this.pages.add(p);
-		
-		return p;
+		return null;
+//		Page p = new Page(this, w, h);
+//		this.pages.add(p);
+//		
+//		return p;
 	}
 	
-	public OutputStream getOutputStreamForPage(long identifier, int layer) throws Exception {		
-		ZipOutputStream os = new ZipOutputStream(new FileOutputStream(this.file));
-		os.putNextEntry(new ZipEntry(identifier + "_" + layer + ".png"));
-		
-		return os;
-	}
+	public void savePage(long identifier, int layer, byte[] content) {
 
-	public void saveToFile(File f) throws ParserConfigurationException, IOException, TransformerException {
-		// Build the meta file
-		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-		
-		// Root element
-		Document doc = docBuilder.newDocument();
-		Element rootElement = doc.createElement(XML_ROOT);
-		doc.appendChild(rootElement);
-		
-		// Meta-data
-		// CreationDate
-		Element creationDate = doc.createElement(XML_CREATION);
-		creationDate.appendChild(doc.createTextNode("" + this.creationDate));
-		rootElement.appendChild(creationDate);
-		
-		// LastModified (NOW)
-		Element lastModified = doc.createElement(XML_MODIFIED);
-		lastModified.appendChild(doc.createTextNode("" + System.currentTimeMillis()));
-		rootElement.appendChild(lastModified);
-		
-		// DocumentName
-		Element documentName = doc.createElement(XML_NAME);
-		documentName.appendChild(doc.createTextNode(this.documentName));
-		rootElement.appendChild(documentName);
-		
-		// NumberOfPages
-		Element numberOfPages = doc.createElement(XML_NUMPAGES);
-		numberOfPages.appendChild(doc.createTextNode("" + this.numberOfPages));
-		rootElement.appendChild(numberOfPages);
-		
-		// Order of pages
-		Element pages = doc.createElement(XML_PAGES);
-		// TODO: add pages
-		rootElement.appendChild(pages);
-		
-		// Write the content into xml file
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		Transformer transformer = transformerFactory.newTransformer();
-		DOMSource source = new DOMSource(doc);
-		
-		ZipOutputStream os = new ZipOutputStream(new FileOutputStream(f));
-		os.putNextEntry(new ZipEntry("meta.xml"));
-		
-		StreamResult result =  new StreamResult(os);
-		transformer.transform(source, result);
-		
-		os.close();
-		
-		this.file = f;
 	}
 	
-	public static Paper openFile(File f) throws Exception {
-		ZipFile zipFile = new ZipFile(f);
-		ZipEntry entry = zipFile.getEntry("meta.xml");
-		InputStream is = zipFile.getInputStream(entry);
+	/**
+	 * Created a new paperLess file
+	 * 
+	 * @param f File, where to save
+	 * @param documentName name of the new document
+	 * @return
+	 */
+	public static Paper createNewPaperFile(File f, String documentName) {
+		SQLiteDatabase db = null;
 		
-		String documentName = null;
-		long creationDate = 0;
-		long lastModified = 0;
-		int numberOfPages = 0;
-		
-		XmlPullParser parser = Xml.newPullParser();
-		parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-		parser.setInput(is, null);
-		parser.nextTag();
-		
-		parser.require(XmlPullParser.START_TAG, null, XML_ROOT);
-		
-		while (parser.next() != XmlPullParser.END_TAG) {
-			if (parser.getEventType() != XmlPullParser.START_TAG) {
-	            continue;
-	        }
-			
-			final String name = parser.getName();
-			
-			if (name.equals(XML_NAME)) {
-				if (parser.next() == XmlPullParser.TEXT)
-					documentName = parser.getText();
-			} else if (name.equals(XML_CREATION)) {
-				if (parser.next() == XmlPullParser.TEXT)
-					creationDate = Long.parseLong(parser.getText());
-			} else if (name.equals(XML_MODIFIED)) {
-				if (parser.next() == XmlPullParser.TEXT)
-					lastModified = Long.parseLong(parser.getText());
-			} else if (name.equals(XML_NUMPAGES)) {
-				if (parser.next() == XmlPullParser.TEXT)
-					numberOfPages = Integer.parseInt(parser.getText());
-			} else {
-				skip(parser);
-				continue;
-			}
-			
-			parser.nextTag();
+		try {
+			db = SQLiteDatabase.openOrCreateDatabase(f.getAbsolutePath(), null);
+		} catch (Exception e) {
+			return null;
 		}
 		
-		if (null == documentName)
+		if (null == db)
+			return null;
+
+		if (!createEmptyDatabase(db, documentName))
 			return null;
 		
-		Paper p = new Paper(documentName);
-		p.creationDate = creationDate;
-		p.lastModified = lastModified;
-		p.numberOfPages = numberOfPages;
-		p.file = f;
+		return new Paper(db);
+	}
+	
+	/**
+	 * Open a existing plf file
+	 * @param f File to open
+	 * @return
+	 */
+	public static Paper openFile(File f) {
+		SQLiteDatabase db = SQLiteDatabase.openDatabase(f.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE);
 		
-		return p;
+		if (null == db)
+			return null;
+		
+		return new Paper(db);
 	}
 	
-	private static void skip(XmlPullParser parser) throws Exception {
-		if (parser.getEventType() != XmlPullParser.START_TAG) {
-			throw new IllegalStateException();
+	/**
+	 * Creates a empty database for a new document file.
+	 * 
+	 * @param db
+	 * @param documentName
+	 * @return
+	 */
+	private static boolean createEmptyDatabase(SQLiteDatabase db, String documentName) {
+		try {
+			/*****************
+			 * Create tables *
+			 *****************/
+			// Meta table
+			db.execSQL("CREATE TABLE " + META_TABLE + "("
+					+ META_FIELD_KEY + " TEXT PRIMARY KEY,"
+					+ META_FIELD_VALUE + " TEXT)");
+						
+			// Pages table
+			db.execSQL("CREATE TABLE " + PAGE_TABLE + "("
+					+ PAGE_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ PAGE_FIELD_NUMBER + " INTEGER," 
+					+ PAGE_FIELD_WIDTH + " INTEGER,"
+					+ PAGE_FIELD_HEIGHT + " INTEGER,"
+					+ PAGE_FIELD_LAYERS + " INTEGER"
+					+ ")");
+			
+			// Bitmaps table
+			db.execSQL("CREATE TABLE " + BITMAP_TABLE + "("
+					+ BITMAP_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ BITMAP_FIELD_PAGE + " INTEGER,"
+					+ BITMAP_FIELD_LAYER + " INTEGER,"
+					+ BITMAP_FIELD_DATA + " BLOB"
+					+ ")");
+			
+			/***************************
+			 * Store default meta data *
+			 ***************************/
+			ContentValues values = new ContentValues(); 
+			values.put(META_FIELD_KEY, META_KEY_CREATED);
+			values.put(META_FIELD_VALUE, "" + System.currentTimeMillis());
+			if (0 > db.insert(META_TABLE, null, values))
+				return false;
+			
+			values = new ContentValues(); 
+			values.put(META_FIELD_KEY, META_KEY_MODIFIED);
+			values.put(META_FIELD_VALUE, "" + System.currentTimeMillis());
+			if (0 > db.insert(META_TABLE, null, values))
+				return false;
+			
+			values = new ContentValues(); 
+			values.put(META_FIELD_KEY, META_KEY_NUMPAGES);
+			values.put(META_FIELD_VALUE, "0");
+			if (0 > db.insert(META_TABLE, null, values))
+				return false;
+			
+			values = new ContentValues(); 
+			values.put(META_FIELD_KEY, META_KEY_NAME);
+			values.put(META_FIELD_VALUE, documentName);
+			if (0 > db.insert(META_TABLE, null, values))
+				return false;
+		} catch (Exception e) {
+			return false;
 		}
-		int depth = 1;
-		while (depth != 0) {
-			switch (parser.next()) {
-			case XmlPullParser.END_TAG:
-				depth--;
-				break;
-			case XmlPullParser.START_TAG:
-				depth++;
-				break;
-			}
-		}
+		
+		return true;
 	}
-	
 }

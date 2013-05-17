@@ -19,6 +19,7 @@
 
 package de.meetr.hdr.paperless.model;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -57,8 +58,12 @@ public class Page {
 	}
 	
 	public void saveLayer(Bitmap b, int layer) throws Exception {
-		OutputStream os = this.paper.getOutputStreamForPage(this.identifier, layer);
-		b.compress(Bitmap.CompressFormat.PNG, 100, os);
-		os.close();
+		// Get outStream in-memory
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		b.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+		
+		outStream.close(); // has no effect on ByteArrayOutputStream
+		
+		this.paper.savePage(100, layer, outStream.toByteArray());
 	}
 }
