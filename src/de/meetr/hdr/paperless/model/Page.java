@@ -20,22 +20,33 @@
 package de.meetr.hdr.paperless.model;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 public class Page {
-	private Paper paper;
-	private long identifier;
-	private int number;
-	private int width;
-	private int height;
+	/**
+	 * Maximal number of saved foreground images for history
+	 */
+	private static final int MAX_HISTORY = 8;
 	
-	public Page(Paper p, long id, int n, int w, int h) {
+	private final Paper paper;
+	private final long identifier;
+	private final int width;
+	private final int height;
+	
+	private final SQLiteDatabase db;
+	
+	public Page(Paper p, long id, int w, int h, SQLiteDatabase db) {
 		this.paper = p;
 		this.identifier = id;
-		this.number = n;
 		this.width = w;
 		this.height = h;
+		this.db = db;
 	}
 	
 	public long getIdentifier() {
@@ -50,13 +61,111 @@ public class Page {
 		return this.height;
 	}
 	
-	public void saveLayer(Bitmap b, int layer) throws Exception {
-		// Get outStream in-memory
+	/**
+	 * Sets the background of the Paper. This methods saves the new
+	 * background to file.
+	 * 
+	 * Note: height and width of the background has to match with the
+	 * 		dimensions of the page.
+	 * 
+	 * @param b 			Bitmap of the background image
+	 * @throws Exception	if any error occurs and saving failed
+	 */
+	public void setBackground(Bitmap b) throws Exception {
+		// Check dimensions
+		if (this.height != b.getHeight() || this.width != b.getWidth())
+			throw new Exception("Dimension mismatch.");
+		
+		// Update db
+		ContentValues values = new ContentValues(); 
+		values.put(Paper.PAGE_FIELD_BACKGROUND , this.bitmapToBlob(b));
+		
+		// Which row to update, based on the ID
+		String selection = Paper.PAGE_FIELD_ID + " = ?";
+		String[] selectionArgs = { "" + this.identifier };
+
+		if (1 != db.update(Paper.PAGE_TABLE, values, selection, selectionArgs)) {
+			throw new Exception("Background save failed.");
+		}
+	}
+	
+	/**
+	 * Gets the background image from file.
+	 * 
+	 * @return		Bitmap of the background image.
+	 */
+	public Bitmap getBackground() {
+		final String[] fields = { Paper.PAGE_FIELD_BACKGROUND };
+		final String where = Paper.PAGE_FIELD_ID + " = ?";
+		final String[] whereArgs = { "" + this.identifier };
+		
+		// Query database for background blob
+		Cursor c = db.query(Paper.PAGE_TABLE, fields, where, whereArgs, null, null, null, "1");
+		c.moveToFirst();
+		
+		if (!c.isAfterLast()) {
+			Bitmap b = this.blobToBitmap(c.getBlob(c.getColumnIndex(Paper.PAGE_FIELD_BACKGROUND)), false);
+			c.close();
+			return b;
+		}
+		
+		c.close();
+		return null;
+	}
+	
+	/**
+	 * Updates the foreground image and saves current one for history.
+	 * 
+	 * Note: height and width of the background has to match with the
+	 * 		dimensions of the page.
+	 * 
+	 * @param b				Bitmap of the new foreground image
+	 * @throws Exception	If any error during saving occurs
+	 */
+	public void updateForeground(Bitmap b) throws Exception {
+		// Check dimensions
+		if (this.height != b.getHeight() || this.width != b.getWidth())
+			throw new Exception("Dimension mismatch.");
+		
+		// First let's save the current content
+		this.saveCurrentForegroundToHistory();
+		
+		// Update db
+		ContentValues values = new ContentValues(); 
+		values.put(Paper.PAGE_FIELD_FOREGROUND , this.bitmapToBlob(b));
+		
+		// Which row to update, based on the ID
+		String selection = Paper.PAGE_FIELD_ID + " = ?";
+		String[] selectionArgs = { "" + this.identifier };
+
+		if (1 != db.update(Paper.PAGE_TABLE, values, selection, selectionArgs)) {
+			throw new Exception("Foreground save failed.");
+		}
+	}
+	
+	private byte[] bitmapToBlob(Bitmap b) throws IOException {
 		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 		b.compress(Bitmap.CompressFormat.PNG, 100, outStream);
-		
 		outStream.close(); // has no effect on ByteArrayOutputStream
 		
-		this.paper.savePage(this.identifier, layer, outStream.toByteArray());
+		return outStream.toByteArray();
+	}
+	
+	private Bitmap blobToBitmap(byte[] blob) {
+		return blobToBitmap(blob, true);
+	}
+	
+	private Bitmap blobToBitmap(byte[] blob, boolean foreground) {
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		if (foreground)
+			options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+		else
+			options.inPreferredConfig = Bitmap.Config.RGB_565;
+		
+		return BitmapFactory.decodeByteArray(blob, 0, blob.length, options);
+	}
+	
+	private void saveCurrentForegroundToHistory() {
+		// TODO: Implement: Save current foreground in history table
 	}
 }

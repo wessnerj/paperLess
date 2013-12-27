@@ -32,9 +32,15 @@ public class FileManager {
 //	private Context context;
 	final private String externalDirPath;
 	
-	public FileManager(Context c) {
+	public FileManager(Context c) throws Exception {
 //		this.context = c;
-		this.externalDirPath = c.getExternalFilesDir(null).toString();
+		final File dataDirectory = c.getExternalFilesDir(null);
+		
+		if (null == dataDirectory) {
+			throw new Exception("No external space available");
+		}
+		
+		this.externalDirPath = dataDirectory.toString();
 		
 		File f = new File(this.externalDirPath + "/" + PAPER_DIR);
 		if (!f.exists()) {

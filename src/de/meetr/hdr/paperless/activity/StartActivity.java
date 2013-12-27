@@ -24,13 +24,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.meetr.hdr.paperless.R;
-
 import de.meetr.hdr.paperless.misc.IntentHelper;
 import de.meetr.hdr.paperless.model.FileManager;
 import de.meetr.hdr.paperless.model.FileResource;
 import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.view.FileListAdapter;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -78,7 +76,12 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		setContentView(R.layout.activity_start);
 		
 		// Init fileManager
-		this.fileManager = new FileManager(this);
+		try {
+			this.fileManager = new FileManager(this);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 				
 		// Set Adapter for GridView
 		this.updateListView();

@@ -27,5 +27,10 @@
     <string name="papertype_squared">squared</string>
     <string name="saving">Saving</string>
     <string name="wait">Please wait ..</string>
+    <string name="color_black">Black</string>
+    <string name="color_white">White</string>
+    <string name="color_red">Red</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_custom">Custom</string>
 
 </resources>

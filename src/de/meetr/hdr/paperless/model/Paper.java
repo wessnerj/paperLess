@@ -37,11 +37,13 @@ public class Paper {
 	private static final String META_KEY_CREATED = "created";
 	private static final String META_KEY_MODIFIED = "modified";
 	
-	private static final String PAGE_TABLE = "pages";
-	private static final String PAGE_FIELD_ID = "_id";
-	private static final String PAGE_FIELD_NUMBER = "pageNumber";
-	private static final String PAGE_FIELD_WIDTH = "width";
-	private static final String PAGE_FIELD_HEIGHT = "height";
+	public static final String PAGE_TABLE = "pages";
+	public static final String PAGE_FIELD_ID = "_id";
+	public static final String PAGE_FIELD_NUMBER = "pageNumber";
+	public static final String PAGE_FIELD_WIDTH = "width";
+	public static final String PAGE_FIELD_HEIGHT = "height";
+	public static final String PAGE_FIELD_BACKGROUND = "background";
+	public static final String PAGE_FIELD_FOREGROUND = "foreground";
 	
 	private static final String BITMAP_TABLE = "bitmaps";
 	private static final String BITMAP_FIELD_ID = "_id";
@@ -135,12 +137,12 @@ public class Paper {
 			return null;
 		
 		final long id = c.getLong(c.getColumnIndex(PAGE_FIELD_ID));
-		final int n = c.getInt(c.getColumnIndex(PAGE_FIELD_NUMBER));
+		// final int n = c.getInt(c.getColumnIndex(PAGE_FIELD_NUMBER));
 		final int w = c.getInt(c.getColumnIndex(PAGE_FIELD_WIDTH));
 		final int h = c.getInt(c.getColumnIndex(PAGE_FIELD_HEIGHT));
 		c.close();
 		
-		Page p = new Page(this, id, n, w, h);
+		Page p = new Page(this, id, w, h, this.db);
 		return p;
 	}
 	
@@ -177,7 +179,7 @@ public class Paper {
 		// Update modified date
 		this.setMetaInformation(META_KEY_MODIFIED, ""+System.currentTimeMillis());
 		
-		return new Page(this, id, pageNumber, w, h);
+		return new Page(this, id, w, h, this.db);
 	}
 	
 	public void savePage(long identifier, int layer, byte[] content) {
@@ -260,7 +262,9 @@ public class Paper {
 					+ PAGE_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
 					+ PAGE_FIELD_NUMBER + " INTEGER UNIQUE," 
 					+ PAGE_FIELD_WIDTH + " INTEGER,"
-					+ PAGE_FIELD_HEIGHT + " INTEGER"
+					+ PAGE_FIELD_HEIGHT + " INTEGER,"
+					+ PAGE_FIELD_BACKGROUND + " BLOB,"
+					+ PAGE_FIELD_FOREGROUND + " BLOB"
 					+ ")");
 			
 			// Bitmaps table

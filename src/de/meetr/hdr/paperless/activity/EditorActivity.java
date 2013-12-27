@@ -19,13 +19,17 @@
 
 package de.meetr.hdr.paperless.activity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.meetr.hdr.paperless.R;
 import de.meetr.hdr.paperless.misc.IntentHelper;
+import de.meetr.hdr.paperless.model.ColorModel;
 import de.meetr.hdr.paperless.model.Page;
 import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.paper.PageFactory;
 import de.meetr.hdr.paperless.view.BitmapView;
-
+import de.meetr.hdr.paperless.view.ColorSpinnerAdapter;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -33,6 +37,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -42,8 +47,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.Button;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.Spinner;
 
 /**
  * (Main) Activity for viewing/editing Paper(s).
@@ -91,13 +102,55 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 */
 	private Paint paint;
 	
+	/**
+	 * Ratio of the zoom level between zoomed and main view
+	 */
+	private float zoomRatio = 2.5f;
+	
+	private List<ColorModel> availableColors;
+	
 	private float lastX, lastY;
 	private int frameOffX, frameOffY;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_editor);
+		
+		// Set color spinner
+		Spinner colorSpinner = (Spinner) findViewById(R.id.spinner_color);
+		this.availableColors = new ArrayList<ColorModel>();
+		this.availableColors.add(new ColorModel(Color.BLACK, getResources().getString(R.string.color_black)));
+		this.availableColors.add(new ColorModel(Color.WHITE, getResources().getString(R.string.color_white)));
+		this.availableColors.add(new ColorModel(Color.RED, getResources().getString(R.string.color_red)));
+		this.availableColors.add(new ColorModel(Color.BLUE, getResources().getString(R.string.color_blue)));
+		ColorSpinnerAdapter colorAdapter = new ColorSpinnerAdapter(this, R.layout.color_spinner_row, this.availableColors);
+		colorSpinner.setAdapter(colorAdapter);
+		// Listener called when spinner item selected
+		colorSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				// TODO Auto-generated method stub
+				paint.setColor(availableColors.get(arg2).getColor());
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// Nothing todo than
+			}
+			
+		});
+		
+		// Click event for add page
+		Button addPageButton = (Button) this.findViewById(R.id.button_add_page);
+		addPageButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				addPage();
+			}
+		});
 		
 		// Get Paper from IntentHelper
 		this.currentPaper = (Paper) IntentHelper.getObjectForKey("selectedPaper");
@@ -125,12 +178,12 @@ public class EditorActivity extends Activity implements OnTouchListener {
 //		LayerDrawable layerDrawable = new LayerDrawable(layers);
 //		
 //		this.foregroundCanvas = new Canvas(foregroundBitmap);
-//	    this.paint = new Paint();
-//	    this.paint.setColor(Color.RED);
-//	    this.paint.setStrokeWidth(3);
-//	    this.paint.setAntiAlias(true);
-//	    this.paint.setDither(true);
-//	    this.paint.setStrokeCap(Paint.Cap.ROUND);
+	    this.paint = new Paint();
+	    this.paint.setColor(Color.RED);
+	    this.paint.setStrokeWidth(3);
+	    this.paint.setAntiAlias(true);
+	    this.paint.setDither(true);
+	    this.paint.setStrokeCap(Paint.Cap.ROUND);
 //	    
 //	    this.mainPaperView.setImageDrawable(layerDrawable);
 //	    this.zoomedPaperView.setImageDrawable(layerDrawable);
@@ -151,7 +204,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.write, menu);
+		// getMenuInflater().inflate(R.menu.write, menu);
 		return true;
 	}
 	
@@ -185,6 +238,13 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		return true;
 	}
 	
+	/**
+	 * Paper itself is moved.
+	 * 
+	 * TODO: Update other views.
+	 * 
+	 * @param event
+	 */
 	public void onMainPaperViewTouch(MotionEvent event) {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_MOVE:
@@ -193,7 +253,6 @@ public class EditorActivity extends Activity implements OnTouchListener {
 							.getScaleX()),
 					(int) ((this.lastY - event.getY()) * this.mainPaperView
 							.getScaleY()));
-
 		case MotionEvent.ACTION_DOWN:
 			this.lastX = event.getX();
 			this.lastY = event.getY();
@@ -201,56 +260,17 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		default:
 			break;
 		}
+		
+		// Update zoomed view
+		this.updateZoomedPositionFromFrame();
 	}
-
+	
+	/**
+	 * Movement on zoomed view -> draw line(s).
+	 * 
+	 * @param event
+	 */
 	public void onZoomedPaperView(MotionEvent event) {
-		// Getting coordinate relative to frame view
-					final int frameX = (int) event.getX();
-					final int frameY = (int) event.getY();
-					
-					// Get layout parameters of the frame
-					LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
-					
-					// Compute coordinate relative to image view
-					final int imageViewX = frameX + params.leftMargin - this.frameOffX;
-					final int imageViewY = frameY + params.topMargin - this.frameOffY;
-					
-					params.width = (int) (this.zoomedPaperView.getDisplayedWidth() / this.mainPaperView.getScaleX());
-					params.height = (int) (this.zoomedPaperView.getDisplayedHeight() / this.mainPaperView.getScaleY());
-					this.zoomedPaperFrame.setLayoutParams(params);
-					
-					// Compute upper left corner in image coordinates
-//					final int imageX = (int) ((this.imageView.getScrollX() + imageViewX)); //  * this.imageView.getScaleX());
-					final int imageX = (int) (this.mainPaperView.getImagePosX() + imageViewX * this.mainPaperView.getScaleX());
-					final int imageY = (int) (this.mainPaperView.getImagePosY() + imageViewY * this.mainPaperView.getScaleY());
-					
-					Log.d("scrollX", "" + this.mainPaperView.getImagePosX());
-					Log.d("imageX", "" + imageX);
-					
-//					this.zoomedView.setScaleX(this.imageView.getScaleX() * 2f);
-//					this.zoomedView.setScaleY(this.imageView.getScaleY() * 2f);
-					
-//					matrix.setScale(this.imageView.getScaleX() * 2f, this.imageView.getScaleY() * 2f, imageX, imageY);
-//					this.zoomedView.setImageMatrix(matrix);
-					this.zoomedPaperView.setImageScale(2.5f);
-					this.zoomedPaperView.scrollTo(imageX, imageY);
-					
-					switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
-						this.frameOffX = frameX;
-						this.frameOffY = frameY;
-						break;
-					case MotionEvent.ACTION_MOVE:
-						params.leftMargin = (int) imageViewX;
-						params.topMargin = (int) imageViewY;
-						this.zoomedPaperFrame.setLayoutParams(params);
-						break;
-					default:
-						break;
-					}			
-	}
-
-	public void onZoomedPaperFrame(MotionEvent event) {
 		final float imageX = event.getX() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosX();
 		final float imageY = event.getY() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosY();
 		
@@ -263,6 +283,44 @@ public class EditorActivity extends Activity implements OnTouchListener {
 			this.lastX = imageX;
 			this.lastY = imageY;
 		}
+	}
+
+	/**
+	 * Zoom frame is moved -> update zoomed view.
+	 * 
+	 * @param event
+	 */
+	public void onZoomedPaperFrame(MotionEvent event) {
+		// Getting coordinate relative to frame view
+		final int frameX = (int) event.getX();
+		final int frameY = (int) event.getY();
+		
+		// Get layout parameters of the frame
+		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
+		
+		// Compute coordinate relative to image view
+		final int imageViewX = frameX + params.leftMargin - this.frameOffX;
+		final int imageViewY = frameY + params.topMargin - this.frameOffY;
+		
+		params.width = (int) (this.zoomedPaperView.getDisplayedWidth() / this.mainPaperView.getScaleX());
+		params.height = (int) (this.zoomedPaperView.getDisplayedHeight() / this.mainPaperView.getScaleY());
+		this.zoomedPaperFrame.setLayoutParams(params);
+		
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			this.frameOffX = frameX;
+			this.frameOffY = frameY;
+			break;
+		case MotionEvent.ACTION_MOVE:
+			params.leftMargin = (int) imageViewX;
+			params.topMargin = (int) imageViewY;
+			this.zoomedPaperFrame.setLayoutParams(params);
+			break;
+		default:
+			break;
+		}
+		
+		this.updateZoomedPositionFromFrame();
 	}
 	
 	private void addPage() {
@@ -310,8 +368,8 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				this.backgroundBitmap.getWidth(),
 				this.backgroundBitmap.getHeight(), 
 				Bitmap.Config.ARGB_8888);
-		Canvas c = new Canvas(this.foregroundBitmap);
-		c.drawARGB(0, 0, 0, 0);
+		this.foregroundCanvas = new Canvas(this.foregroundBitmap);
+		this.foregroundCanvas.drawARGB(0, 0, 0, 0);
 		
 		this.currentPage = this.currentPaper.addNewPage(this.backgroundBitmap.getWidth(), this.backgroundBitmap.getHeight());
 		
@@ -325,6 +383,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		
 		this.mainPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperView.setVisibility(View.VISIBLE);
+		this.zoomedPaperFrame.setVisibility(View.VISIBLE);
 		
 		dialog.dismiss();
 	}
@@ -336,8 +395,8 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		ProgressDialog dialog = ProgressDialog.show(this, getString(R.string.saving), getString(R.string.wait), true);
 
 		try {
-			this.currentPage.saveLayer(this.backgroundBitmap, 0);
-			this.currentPage.saveLayer(this.foregroundBitmap, 1);
+			this.currentPage.setBackground(this.backgroundBitmap);
+			this.currentPage.updateForeground(this.foregroundBitmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -355,5 +414,20 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		if (null != this.backgroundBitmap)
 			this.backgroundBitmap.recycle();
 		this.backgroundBitmap = null;
+	}
+	
+	/**
+	 * Updates the zoomed view according to the position of the frame.
+	 */
+	private void updateZoomedPositionFromFrame() {
+		// Get layout parameters of the frame
+		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
+		
+		// Compute upper left corner in image coordinates
+		final int imageX = (int) (this.mainPaperView.getImagePosX() + params.leftMargin * this.mainPaperView.getScaleY());
+		final int imageY = (int) (this.mainPaperView.getImagePosY() + params.topMargin * this.mainPaperView.getScaleY());
+		
+		this.zoomedPaperView.setImageScale(this.zoomRatio);
+		this.zoomedPaperView.scrollTo(imageX, imageY);
 	}
 }
