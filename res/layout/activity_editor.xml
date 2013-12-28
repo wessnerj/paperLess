@@ -107,6 +107,12 @@
             android:scaleType="matrix"
             android:src="@drawable/ic_launcher"
             android:visibility="invisible" />
+
+        <de.meetr.hdr.paperless.view.DrawView
+            android:id="@+id/drawView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
     </RelativeLayout>
 
 </LinearLayout>

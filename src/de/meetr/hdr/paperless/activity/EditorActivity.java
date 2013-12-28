@@ -30,6 +30,7 @@ import de.meetr.hdr.paperless.model.Paper;
 import de.meetr.hdr.paperless.paper.PageFactory;
 import de.meetr.hdr.paperless.view.BitmapView;
 import de.meetr.hdr.paperless.view.ColorSpinnerAdapter;
+import de.meetr.hdr.paperless.view.DrawView;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -181,9 +182,15 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	    this.paint = new Paint();
 	    this.paint.setColor(Color.RED);
 	    this.paint.setStrokeWidth(3);
+	    this.paint.setStrokeJoin(Paint.Join.ROUND);
+	    this.paint.setStyle(Paint.Style.STROKE);
 	    this.paint.setAntiAlias(true);
-	    this.paint.setDither(true);
-	    this.paint.setStrokeCap(Paint.Cap.ROUND);
+	    // this.paint.setDither(true);
+	    // this.paint.setStrokeCap(Paint.Cap.ROUND);
+
+		// Set Paint for drawView
+		final DrawView drawView = (DrawView) findViewById(R.id.drawView1);
+		drawView.setPaint(this.paint);
 //	    
 //	    this.mainPaperView.setImageDrawable(layerDrawable);
 //	    this.zoomedPaperView.setImageDrawable(layerDrawable);
@@ -271,18 +278,18 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * @param event
 	 */
 	public void onZoomedPaperView(MotionEvent event) {
-		final float imageX = event.getX() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosX();
-		final float imageY = event.getY() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosY();
-		
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_MOVE:
-			this.foregroundCanvas.drawLine(this.lastX, this.lastY, imageX, imageY, this.paint);
-			this.mainPaperView.invalidate();
-			this.zoomedPaperView.invalidate();
-		case MotionEvent.ACTION_DOWN:
-			this.lastX = imageX;
-			this.lastY = imageY;
-		}
+//		final float imageX = event.getX() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosX();
+//		final float imageY = event.getY() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosY();
+//		
+//		switch (event.getAction()) {
+//		case MotionEvent.ACTION_MOVE:
+//			this.foregroundCanvas.drawLine(this.lastX, this.lastY, imageX, imageY, this.paint);
+//			this.mainPaperView.invalidate();
+//			this.zoomedPaperView.invalidate();
+//		case MotionEvent.ACTION_DOWN:
+//			this.lastX = imageX;
+//			this.lastY = imageY;
+//		}
 	}
 
 	/**
