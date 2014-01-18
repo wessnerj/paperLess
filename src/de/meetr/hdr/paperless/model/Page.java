@@ -38,14 +38,18 @@ public class Page {
 	private final long identifier;
 	private final int width;
 	private final int height;
+	private int history;
+	
+	private Bitmap foreground = null;
 	
 	private final SQLiteDatabase db;
 	
-	public Page(Paper p, long id, int w, int h, SQLiteDatabase db) {
+	public Page(Paper p, long id, int w, int h, int history, SQLiteDatabase db) {
 		this.paper = p;
 		this.identifier = id;
 		this.width = w;
 		this.height = h;
+		this.history = history;
 		this.db = db;
 	}
 	
@@ -129,10 +133,15 @@ public class Page {
 		
 		// First let's save the current content
 		this.saveCurrentForegroundToHistory();
+		this.history++;
+		
+		// Set new foreground bitmap
+		this.foreground = b;
 		
 		// Update db
 		ContentValues values = new ContentValues(); 
-		values.put(Paper.PAGE_FIELD_FOREGROUND , this.bitmapToBlob(b));
+		values.put(Paper.PAGE_FIELD_FOREGROUND , this.bitmapToBlob(this.foreground));
+		values.put(Paper.PAGE_FIELD_CURRENT_HISTORY, this.history);
 		
 		// Which row to update, based on the ID
 		String selection = Paper.PAGE_FIELD_ID + " = ?";
@@ -141,6 +150,30 @@ public class Page {
 		if (1 != db.update(Paper.PAGE_TABLE, values, selection, selectionArgs)) {
 			throw new Exception("Foreground save failed.");
 		}
+	}
+	
+	/**
+	 * Gets the foreground image from file.
+	 * 
+	 * @return		Bitmap of the foreground image.
+	 */
+	public Bitmap getForeground() {
+		final String[] fields = { Paper.PAGE_FIELD_FOREGROUND };
+		final String where = Paper.PAGE_FIELD_ID + " = ?";
+		final String[] whereArgs = { "" + this.identifier };
+		
+		// Query database for background blob
+		Cursor c = db.query(Paper.PAGE_TABLE, fields, where, whereArgs, null, null, null, "1");
+		c.moveToFirst();
+		
+		if (!c.isAfterLast()) {
+			this.foreground = this.blobToBitmap(c.getBlob(c.getColumnIndex(Paper.PAGE_FIELD_FOREGROUND)), false);
+		} else {
+			this.foreground = null;
+		}
+		
+		c.close();
+		return this.foreground;
 	}
 	
 	private byte[] bitmapToBlob(Bitmap b) throws IOException {
@@ -165,7 +198,21 @@ public class Page {
 		return BitmapFactory.decodeByteArray(blob, 0, blob.length, options);
 	}
 	
-	private void saveCurrentForegroundToHistory() {
-		// TODO: Implement: Save current foreground in history table
+	private void saveCurrentForegroundToHistory() throws IOException {
+		// Delete all history items, which have greater or equal history number
+		// or are too old (number <= this.history - MAX_HISTORY)
+		String[] whereArgs = { "" + this.identifier, "" + this.history,
+				"" + (this.history - MAX_HISTORY) };
+		this.db.delete(Paper.HISTORY_FIELD_PAGE, Paper.HISTORY_FIELD_PAGE
+				+ " = ? AND (" + Paper.HISTORY_FIELD_NUMBER + " >= ? OR "
+				+ Paper.HISTORY_FIELD_NUMBER + " <= ?", whereArgs);
+		
+		// Add current foreground to history
+		ContentValues values = new ContentValues();
+		values.put(Paper.HISTORY_FIELD_PAGE, this.identifier);
+		values.put(Paper.HISTORY_FIELD_NUMBER, this.history);
+		if (null != this.foreground)
+			values.put(Paper.HISTORY_FIELD_DATA, this.bitmapToBlob(this.foreground));
+		this.db.insert(Paper.HISTORY_TABLE, null, values);
 	}
 }

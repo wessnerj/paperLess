@@ -40,16 +40,17 @@ public class Paper {
 	public static final String PAGE_TABLE = "pages";
 	public static final String PAGE_FIELD_ID = "_id";
 	public static final String PAGE_FIELD_NUMBER = "pageNumber";
+	public static final String PAGE_FIELD_CURRENT_HISTORY = "curHistory";
 	public static final String PAGE_FIELD_WIDTH = "width";
 	public static final String PAGE_FIELD_HEIGHT = "height";
 	public static final String PAGE_FIELD_BACKGROUND = "background";
 	public static final String PAGE_FIELD_FOREGROUND = "foreground";
 	
-	private static final String BITMAP_TABLE = "bitmaps";
-	private static final String BITMAP_FIELD_ID = "_id";
-	private static final String BITMAP_FIELD_PAGE = "page_id";
-	private static final String BITMAP_FIELD_LAYER = "layer";
-	private static final String BITMAP_FIELD_DATA = "data";
+	public static final String HISTORY_TABLE = "history";
+	public static final String HISTORY_FIELD_ID = "_id";
+	public static final String HISTORY_FIELD_PAGE = "page_id";
+	public static final String HISTORY_FIELD_NUMBER = "number";
+	public static final String HISTORY_FIELD_DATA = "data";
 	
 	/**
 	 * Sqlite database where the data is stored.
@@ -126,7 +127,7 @@ public class Paper {
 	}
 	
 	public Page getPage(int pageNumber) {
-		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
+		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_CURRENT_HISTORY, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
 		final String where = PAGE_FIELD_NUMBER + "=?";
 		final String[] whereArgs = { ""+pageNumber };
 		
@@ -138,11 +139,12 @@ public class Paper {
 		
 		final long id = c.getLong(c.getColumnIndex(PAGE_FIELD_ID));
 		// final int n = c.getInt(c.getColumnIndex(PAGE_FIELD_NUMBER));
+		final int history = c.getInt(c.getColumnIndex(PAGE_FIELD_CURRENT_HISTORY));
 		final int w = c.getInt(c.getColumnIndex(PAGE_FIELD_WIDTH));
 		final int h = c.getInt(c.getColumnIndex(PAGE_FIELD_HEIGHT));
 		c.close();
 		
-		Page p = new Page(this, id, w, h, this.db);
+		Page p = new Page(this, id, w, h, history, this.db);
 		return p;
 	}
 	
@@ -165,6 +167,7 @@ public class Paper {
 		values.put(PAGE_FIELD_NUMBER, pageNumber);
 		values.put(PAGE_FIELD_WIDTH, w);
 		values.put(PAGE_FIELD_HEIGHT, h);
+		values.put(PAGE_FIELD_CURRENT_HISTORY, 0);
 		
 		// Insert
 		final long id = db.insert(PAGE_TABLE, null, values);
@@ -179,27 +182,11 @@ public class Paper {
 		// Update modified date
 		this.setMetaInformation(META_KEY_MODIFIED, ""+System.currentTimeMillis());
 		
-		return new Page(this, id, w, h, this.db);
+		return new Page(this, id, w, h, 0, this.db);
 	}
 	
-	public void savePage(long identifier, int layer, byte[] content) {
-		// Delete old layer data (if existing)
-		this.deleteLayer(identifier, layer);
-		
-		// Insert/Save data
-		ContentValues values = new ContentValues(); 
-		values.put(BITMAP_FIELD_PAGE, identifier);
-		values.put(BITMAP_FIELD_LAYER, layer);
-		values.put(BITMAP_FIELD_DATA, content);
-		
-		db.insert(BITMAP_TABLE, null, values);
-	}
-	
-	public void deleteLayer(long pageId, int layer) {
-		final String where = BITMAP_FIELD_PAGE + "=? AND " + BITMAP_FIELD_LAYER + "=?";
-		final String[] whereArgs = { ""+pageId, ""+layer };
-		this.db.delete(BITMAP_TABLE, where, whereArgs);
-	}
+//	public void savePage(long identifier, int layer, byte[] content) {
+//	}
 	
 	/**
 	 * Created a new paperLess file
@@ -260,19 +247,20 @@ public class Paper {
 			// Pages table
 			db.execSQL("CREATE TABLE " + PAGE_TABLE + "("
 					+ PAGE_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ PAGE_FIELD_NUMBER + " INTEGER UNIQUE," 
+					+ PAGE_FIELD_NUMBER + " INTEGER UNIQUE,"
+					+ PAGE_FIELD_CURRENT_HISTORY + " INTEGER,"
 					+ PAGE_FIELD_WIDTH + " INTEGER,"
 					+ PAGE_FIELD_HEIGHT + " INTEGER,"
 					+ PAGE_FIELD_BACKGROUND + " BLOB,"
 					+ PAGE_FIELD_FOREGROUND + " BLOB"
 					+ ")");
 			
-			// Bitmaps table
-			db.execSQL("CREATE TABLE " + BITMAP_TABLE + "("
-					+ BITMAP_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ BITMAP_FIELD_PAGE + " INTEGER,"
-					+ BITMAP_FIELD_LAYER + " INTEGER,"
-					+ BITMAP_FIELD_DATA + " BLOB"
+			// History table
+			db.execSQL("CREATE TABLE " + HISTORY_TABLE + "("
+					+ HISTORY_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ HISTORY_FIELD_PAGE + " INTEGER,"
+					+ HISTORY_FIELD_NUMBER + " INTEGER,"
+					+ HISTORY_FIELD_DATA + " BLOB"
 					+ ")");
 			
 			/***************************

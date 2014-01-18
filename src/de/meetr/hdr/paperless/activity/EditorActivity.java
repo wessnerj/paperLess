@@ -27,10 +27,12 @@ import de.meetr.hdr.paperless.misc.IntentHelper;
 import de.meetr.hdr.paperless.model.ColorModel;
 import de.meetr.hdr.paperless.model.Page;
 import de.meetr.hdr.paperless.model.Paper;
+import de.meetr.hdr.paperless.model.Point2d;
 import de.meetr.hdr.paperless.paper.PageFactory;
 import de.meetr.hdr.paperless.view.BitmapView;
 import de.meetr.hdr.paperless.view.ColorSpinnerAdapter;
 import de.meetr.hdr.paperless.view.DrawView;
+import de.meetr.hdr.paperless.view.OnDrawDoneListener;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -86,6 +88,11 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	private View zoomedPaperFrame;
 	
 	/**
+	 * View used for drawing
+	 */
+	private DrawView drawView;
+	
+	/**
 	 * Bitmap for the background (Paper)
 	 */
 	private Bitmap backgroundBitmap = null;
@@ -106,7 +113,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	/**
 	 * Ratio of the zoom level between zoomed and main view
 	 */
-	private float zoomRatio = 2.5f;
+	private float zoomRatio = 2.f;
 	
 	private List<ColorModel> availableColors;
 	
@@ -153,6 +160,16 @@ public class EditorActivity extends Activity implements OnTouchListener {
 			}
 		});
 		
+		this.drawView = (DrawView) this.findViewById(R.id.drawView1);
+		this.drawView.setOnDrawDoneListener(new OnDrawDoneListener() {
+			@Override
+			public boolean onDrawDone(List<Point2d> points) {
+				saveDrawing(points);
+				return true;
+			}
+			
+		});
+		
 		// Get Paper from IntentHelper
 		this.currentPaper = (Paper) IntentHelper.getObjectForKey("selectedPaper");
 		
@@ -165,35 +182,17 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.mainPaperView.setOnTouchListener(this);
 	    this.zoomedPaperFrame.setOnTouchListener(this);
 	    this.zoomedPaperView.setOnTouchListener(this);
-
-//		this.backgroundBitmap = PaperFactory.getDINA4Page(PaperFactory.PaperType.LINED);
-//		this.foregroundBitmap = Bitmap.createBitmap(
-//				this.backgroundBitmap.getWidth(),
-//				this.backgroundBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-//		Canvas c = new Canvas(this.foregroundBitmap);
-//		c.drawARGB(0, 0, 0, 0);
-//		
-//		Drawable[] layers = new Drawable[2];
-//		layers[0] = new BitmapDrawable(this.getResources(), this.backgroundBitmap);
-//		layers[1] = new BitmapDrawable(this.getResources(), this.foregroundBitmap);
-//		LayerDrawable layerDrawable = new LayerDrawable(layers);
-//		
-//		this.foregroundCanvas = new Canvas(foregroundBitmap);
+	    
+	    // Get paint for drawing
 	    this.paint = new Paint();
 	    this.paint.setColor(Color.RED);
 	    this.paint.setStrokeWidth(3);
 	    this.paint.setStrokeJoin(Paint.Join.ROUND);
 	    this.paint.setStyle(Paint.Style.STROKE);
 	    this.paint.setAntiAlias(true);
-	    // this.paint.setDither(true);
-	    // this.paint.setStrokeCap(Paint.Cap.ROUND);
 
 		// Set Paint for drawView
-		final DrawView drawView = (DrawView) findViewById(R.id.drawView1);
-		drawView.setPaint(this.paint);
-//	    
-//	    this.mainPaperView.setImageDrawable(layerDrawable);
-//	    this.zoomedPaperView.setImageDrawable(layerDrawable);
+	    this.drawView.setPaint(this.paint);
 	}
 	
 	public void onStart() {
@@ -209,31 +208,10 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		// getMenuInflater().inflate(R.menu.write, menu);
-		return true;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.action_add_page:
-			this.addPage();
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-
-	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		switch (v.getId()) {
 		case R.id.mainPaperView:
 			this.onMainPaperViewTouch(event);
-			break;
-		case R.id.zoomedPaperView:
-			this.onZoomedPaperView(event);
 			break;
 		case R.id.zoomedPaperFrame:
 			this.onZoomedPaperFrame(event);
@@ -246,9 +224,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	}
 	
 	/**
-	 * Paper itself is moved.
-	 * 
-	 * TODO: Update other views.
+	 * This method is called, if the paper is moved. The method than updates the other views.
 	 * 
 	 * @param event
 	 */
@@ -270,26 +246,6 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		
 		// Update zoomed view
 		this.updateZoomedPositionFromFrame();
-	}
-	
-	/**
-	 * Movement on zoomed view -> draw line(s).
-	 * 
-	 * @param event
-	 */
-	public void onZoomedPaperView(MotionEvent event) {
-//		final float imageX = event.getX() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosX();
-//		final float imageY = event.getY() / this.zoomedPaperView.getImageScale() + this.zoomedPaperView.getImagePosY();
-//		
-//		switch (event.getAction()) {
-//		case MotionEvent.ACTION_MOVE:
-//			this.foregroundCanvas.drawLine(this.lastX, this.lastY, imageX, imageY, this.paint);
-//			this.mainPaperView.invalidate();
-//			this.zoomedPaperView.invalidate();
-//		case MotionEvent.ACTION_DOWN:
-//			this.lastX = imageX;
-//			this.lastY = imageY;
-//		}
 	}
 
 	/**
@@ -330,6 +286,9 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.updateZoomedPositionFromFrame();
 	}
 	
+	/**
+	 * Shows the page adding dialog.
+	 */
 	private void addPage() {
 		String[] items = {
 				getString(R.string.papertype_lined),
@@ -365,6 +324,11 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		alert.show();
 	}
 	
+	/**
+	 * Actually adds a new page to the paper.
+	 * 
+	 * @param type		Type of the new page
+	 */
 	private void addPage(PageFactory.PaperType type) {
 		this.closePage();
 		
@@ -395,6 +359,9 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		dialog.dismiss();
 	}
 	
+	/**
+	 * Closes the current page.
+	 */
 	private void closePage() {
 		if (null == this.currentPage)
 			return;
@@ -413,6 +380,9 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.clearBitmaps();
 	}
 	
+	/**
+	 * Clear both foreground and background bitmaps.
+	 */
 	private void clearBitmaps() {
 		if (null != this.foregroundBitmap)
 			this.foregroundBitmap.recycle();
@@ -436,5 +406,31 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		
 		this.zoomedPaperView.setImageScale(this.zoomRatio);
 		this.zoomedPaperView.scrollTo(imageX, imageY);
+	}
+	
+	/**
+	 * DrawView has detect a new drawing -> save
+	 * 
+	 * @param points		Points, which have been drawn.
+	 */
+	private void saveDrawing(List<Point2d> points) {
+		final int offX = this.mainPaperView.getImagePosX() + this.frameOffX;
+		final int offY = this.mainPaperView.getImagePosY() + this.frameOffY;
+		
+		Point2d prev = null;
+		for (Point2d cur: points) {
+			if (null == prev) {
+				prev = cur;
+				continue;
+			}
+			
+			Log.d("ScaleX", "" + this.mainPaperView.getScaleX());
+			
+			this.foregroundCanvas.drawLine(offX + (prev.x/this.zoomRatio), offY + (prev.y/this.zoomRatio), offX + (cur.x/this.zoomRatio), offY + (cur.y/this.zoomRatio), this.paint);
+			prev = cur;
+		}
+		
+		// Clear draw view itself
+		this.drawView.clear();
 	}
 }
