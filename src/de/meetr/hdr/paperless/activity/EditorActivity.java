@@ -414,8 +414,14 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * @param points		Points, which have been drawn.
 	 */
 	private void saveDrawing(List<Point2d> points) {
-		final int offX = this.mainPaperView.getImagePosX() + this.frameOffX;
-		final int offY = this.mainPaperView.getImagePosY() + this.frameOffY;
+		// Get layout parameters of the frame
+		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
+		// Compute upper left corner in image coordinates
+		final int offX = (int) (this.mainPaperView.getImagePosX() + params.leftMargin * this.mainPaperView.getScaleY());
+		final int offY = (int) (this.mainPaperView.getImagePosY() + params.topMargin * this.mainPaperView.getScaleY());
+		// final int offX = (int) (this.mainPaperView.getImagePosX() + (this.frameOffX / this.mainPaperView.getScaleX()));
+		// final int offY = (int) (this.mainPaperView.getImagePosY() + (this.frameOffY / this.mainPaperView.getScaleY()));
+		final float imgScale = this.zoomedPaperView.getImageScale();
 		
 		Point2d prev = null;
 		for (Point2d cur: points) {
@@ -424,9 +430,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				continue;
 			}
 			
-			Log.d("ScaleX", "" + this.mainPaperView.getScaleX());
-			
-			this.foregroundCanvas.drawLine(offX + (prev.x/this.zoomRatio), offY + (prev.y/this.zoomRatio), offX + (cur.x/this.zoomRatio), offY + (cur.y/this.zoomRatio), this.paint);
+			this.foregroundCanvas.drawLine(offX + (prev.x/imgScale), offY + (prev.y/imgScale), offX + (cur.x/imgScale), offY + (cur.y/imgScale), this.paint);
 			prev = cur;
 		}
 		

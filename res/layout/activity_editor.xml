@@ -103,15 +103,20 @@
             android:layout_marginRight="4dp"
             android:layout_marginTop="2dp"
             android:background="#444444"
-            android:padding="4dp"
+            android:padding="0dp"
             android:scaleType="matrix"
             android:src="@drawable/ic_launcher"
             android:visibility="invisible" />
 
         <de.meetr.hdr.paperless.view.DrawView
             android:id="@+id/drawView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="2dp"
+            android:padding="0dp" />
 
     </RelativeLayout>
 
