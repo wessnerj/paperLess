@@ -73,9 +73,9 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * Current page, which is displayed
 	 */
 	private Page currentPage = null;
-	
+
 	/**
-	 * MainView for the Page 
+	 * MainView for the Page
 	 */
 	private BitmapView mainPaperView;
 	/**
@@ -86,12 +86,12 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * Frame which shows the dimension of the zoomed view in the main view
 	 */
 	private View zoomedPaperFrame;
-	
+
 	/**
 	 * View used for drawing
 	 */
 	private DrawView drawView;
-	
+
 	/**
 	 * Bitmap for the background (Paper)
 	 */
@@ -100,7 +100,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * Bitmap for the user's drawing
 	 */
 	private Bitmap foregroundBitmap = null;
-	
+
 	/**
 	 * Canvas to draw on the foregroundBitmap
 	 */
@@ -109,31 +109,41 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * Paint used to draw on Bitmaps
 	 */
 	private Paint paint;
-	
+
 	/**
 	 * Ratio of the zoom level between zoomed and main view
 	 */
 	private float zoomRatio = 2.f;
-	
+
 	private List<ColorModel> availableColors;
-	
+
 	private float lastX, lastY;
 	private int frameOffX, frameOffY;
-	
+
+	/**
+	 * Offset of the zoomed view
+	 */
+	private int zoomedViewOffX, zoomedViewOffY;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_editor);
-		
+
 		// Set color spinner
 		Spinner colorSpinner = (Spinner) findViewById(R.id.spinner_color);
 		this.availableColors = new ArrayList<ColorModel>();
-		this.availableColors.add(new ColorModel(Color.BLACK, getResources().getString(R.string.color_black)));
-		this.availableColors.add(new ColorModel(Color.WHITE, getResources().getString(R.string.color_white)));
-		this.availableColors.add(new ColorModel(Color.RED, getResources().getString(R.string.color_red)));
-		this.availableColors.add(new ColorModel(Color.BLUE, getResources().getString(R.string.color_blue)));
-		ColorSpinnerAdapter colorAdapter = new ColorSpinnerAdapter(this, R.layout.color_spinner_row, this.availableColors);
+		this.availableColors.add(new ColorModel(Color.BLACK, getResources()
+				.getString(R.string.color_black)));
+		this.availableColors.add(new ColorModel(Color.WHITE, getResources()
+				.getString(R.string.color_white)));
+		this.availableColors.add(new ColorModel(Color.RED, getResources()
+				.getString(R.string.color_red)));
+		this.availableColors.add(new ColorModel(Color.BLUE, getResources()
+				.getString(R.string.color_blue)));
+		ColorSpinnerAdapter colorAdapter = new ColorSpinnerAdapter(this,
+				R.layout.color_spinner_row, this.availableColors);
 		colorSpinner.setAdapter(colorAdapter);
 		// Listener called when spinner item selected
 		colorSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
@@ -148,9 +158,9 @@ public class EditorActivity extends Activity implements OnTouchListener {
 			public void onNothingSelected(AdapterView<?> arg0) {
 				// Nothing todo than
 			}
-			
+
 		});
-		
+
 		// Click event for add page
 		Button addPageButton = (Button) this.findViewById(R.id.button_add_page);
 		addPageButton.setOnClickListener(new OnClickListener() {
@@ -159,7 +169,31 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				addPage();
 			}
 		});
-		
+
+		// Get Paper from IntentHelper
+		this.currentPaper = (Paper) IntentHelper
+				.getObjectForKey("selectedPaper");
+
+		// Get all needed views
+		this.mainPaperView = (BitmapView) this.findViewById(R.id.mainPaperView);
+		this.zoomedPaperView = (BitmapView) this
+				.findViewById(R.id.zoomedPaperView);
+		this.zoomedPaperFrame = (View) this.findViewById(R.id.zoomedPaperFrame);
+
+		// Add listeners
+		this.mainPaperView.setOnTouchListener(this);
+		this.zoomedPaperFrame.setOnTouchListener(this);
+		this.zoomedPaperView.setOnTouchListener(this);
+
+		// Get paint for drawing
+		this.paint = new Paint();
+		this.paint.setColor(Color.RED);
+		this.paint.setStrokeWidth(3);
+		this.paint.setStrokeJoin(Paint.Join.ROUND);
+		this.paint.setStyle(Paint.Style.STROKE);
+		this.paint.setAntiAlias(true);
+
+		// Register for draw done event
 		this.drawView = (DrawView) this.findViewById(R.id.drawView1);
 		this.drawView.setOnDrawDoneListener(new OnDrawDoneListener() {
 			@Override
@@ -167,43 +201,20 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				saveDrawing(points);
 				return true;
 			}
-			
 		});
-		
-		// Get Paper from IntentHelper
-		this.currentPaper = (Paper) IntentHelper.getObjectForKey("selectedPaper");
-		
-		// Get all needed views
-		this.mainPaperView = (BitmapView) this.findViewById(R.id.mainPaperView);
-		this.zoomedPaperView = (BitmapView) this.findViewById(R.id.zoomedPaperView);
-		this.zoomedPaperFrame = (View) this.findViewById(R.id.zoomedPaperFrame);
-		
-		// Add listeners
-		this.mainPaperView.setOnTouchListener(this);
-	    this.zoomedPaperFrame.setOnTouchListener(this);
-	    this.zoomedPaperView.setOnTouchListener(this);
-	    
-	    // Get paint for drawing
-	    this.paint = new Paint();
-	    this.paint.setColor(Color.RED);
-	    this.paint.setStrokeWidth(3);
-	    this.paint.setStrokeJoin(Paint.Join.ROUND);
-	    this.paint.setStyle(Paint.Style.STROKE);
-	    this.paint.setAntiAlias(true);
-
 		// Set Paint for drawView
-	    this.drawView.setPaint(this.paint);
+		this.drawView.setPaint(this.paint);
 	}
-	
+
 	public void onStart() {
 		super.onStart();
-		
+
 		Log.d("onStart", "ImageView width: " + this.mainPaperView.getWidth());
 	}
-	
+
 	public void onResume() {
 		super.onResume();
-		
+
 		Log.d("onResume", "ImageView width: " + this.mainPaperView.getWidth());
 	}
 
@@ -219,12 +230,13 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		default:
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
-	 * This method is called, if the paper is moved. The method than updates the other views.
+	 * This method is called, if the paper is moved. The method than updates the
+	 * other views.
 	 * 
 	 * @param event
 	 */
@@ -243,7 +255,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		default:
 			break;
 		}
-		
+
 		// Update zoomed view
 		this.updateZoomedPositionFromFrame();
 	}
@@ -257,18 +269,21 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		// Getting coordinate relative to frame view
 		final int frameX = (int) event.getX();
 		final int frameY = (int) event.getY();
-		
+
 		// Get layout parameters of the frame
-		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
-		
+		LayoutParams params = (LayoutParams) this.zoomedPaperFrame
+				.getLayoutParams();
+
 		// Compute coordinate relative to image view
 		final int imageViewX = frameX + params.leftMargin - this.frameOffX;
 		final int imageViewY = frameY + params.topMargin - this.frameOffY;
-		
-		params.width = (int) (this.zoomedPaperView.getDisplayedWidth() / this.mainPaperView.getScaleX());
-		params.height = (int) (this.zoomedPaperView.getDisplayedHeight() / this.mainPaperView.getScaleY());
+
+		params.width = (int) (this.zoomedPaperView.getDisplayedWidth() / this.mainPaperView
+				.getScaleX());
+		params.height = (int) (this.zoomedPaperView.getDisplayedHeight() / this.mainPaperView
+				.getScaleY());
 		this.zoomedPaperFrame.setLayoutParams(params);
-		
+
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			this.frameOffX = frameX;
@@ -282,19 +297,17 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		default:
 			break;
 		}
-		
+
 		this.updateZoomedPositionFromFrame();
 	}
-	
+
 	/**
 	 * Shows the page adding dialog.
 	 */
 	private void addPage() {
-		String[] items = {
-				getString(R.string.papertype_lined),
+		String[] items = { getString(R.string.papertype_lined),
 				getString(R.string.papertype_squared),
-				getString(R.string.papertype_blank)
-			};
+				getString(R.string.papertype_blank) };
 
 		// Setup AlertDialog for name request
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -315,7 +328,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				default:
 					type = PageFactory.PaperType.BLANK;
 				}
-				
+
 				addPage(type);
 			}
 		});
@@ -323,50 +336,57 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		// Display the dialog
 		alert.show();
 	}
-	
+
 	/**
 	 * Actually adds a new page to the paper.
 	 * 
-	 * @param type		Type of the new page
+	 * @param type
+	 *            Type of the new page
 	 */
 	private void addPage(PageFactory.PaperType type) {
 		this.closePage();
-		
-		ProgressDialog dialog = ProgressDialog.show(this, getString(R.string.saving), getString(R.string.wait) + "adding...", true);
-		
+
+		ProgressDialog dialog = ProgressDialog.show(this,
+				getString(R.string.saving), getString(R.string.wait)
+						+ "adding...", true);
+
 		this.backgroundBitmap = PageFactory.getDINA4Page(type);
 		this.foregroundBitmap = Bitmap.createBitmap(
 				this.backgroundBitmap.getWidth(),
-				this.backgroundBitmap.getHeight(), 
-				Bitmap.Config.ARGB_8888);
+				this.backgroundBitmap.getHeight(), Bitmap.Config.ARGB_8888);
 		this.foregroundCanvas = new Canvas(this.foregroundBitmap);
 		this.foregroundCanvas.drawARGB(0, 0, 0, 0);
-		
-		this.currentPage = this.currentPaper.addNewPage(this.backgroundBitmap.getWidth(), this.backgroundBitmap.getHeight());
-		
+
+		this.currentPage = this.currentPaper.addNewPage(
+				this.backgroundBitmap.getWidth(),
+				this.backgroundBitmap.getHeight());
+
 		Drawable[] layers = new Drawable[2];
-		layers[0] = new BitmapDrawable(this.getResources(), this.backgroundBitmap);
-		layers[1] = new BitmapDrawable(this.getResources(), this.foregroundBitmap);
+		layers[0] = new BitmapDrawable(this.getResources(),
+				this.backgroundBitmap);
+		layers[1] = new BitmapDrawable(this.getResources(),
+				this.foregroundBitmap);
 		LayerDrawable layerDrawable = new LayerDrawable(layers);
-		
+
 		this.mainPaperView.setImageDrawable(layerDrawable);
 		this.zoomedPaperView.setImageDrawable(layerDrawable);
-		
+
 		this.mainPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperFrame.setVisibility(View.VISIBLE);
-		
+
 		dialog.dismiss();
 	}
-	
+
 	/**
 	 * Closes the current page.
 	 */
 	private void closePage() {
 		if (null == this.currentPage)
 			return;
-		
-		ProgressDialog dialog = ProgressDialog.show(this, getString(R.string.saving), getString(R.string.wait), true);
+
+		ProgressDialog dialog = ProgressDialog.show(this,
+				getString(R.string.saving), getString(R.string.wait), true);
 
 		try {
 			this.currentPage.setBackground(this.backgroundBitmap);
@@ -374,12 +394,12 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		dialog.dismiss();
-		
+
 		this.clearBitmaps();
 	}
-	
+
 	/**
 	 * Clear both foreground and background bitmaps.
 	 */
@@ -387,53 +407,53 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		if (null != this.foregroundBitmap)
 			this.foregroundBitmap.recycle();
 		this.foregroundBitmap = null;
-		
+
 		if (null != this.backgroundBitmap)
 			this.backgroundBitmap.recycle();
 		this.backgroundBitmap = null;
 	}
-	
+
 	/**
 	 * Updates the zoomed view according to the position of the frame.
 	 */
 	private void updateZoomedPositionFromFrame() {
 		// Get layout parameters of the frame
-		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
-		
+		LayoutParams params = (LayoutParams) this.zoomedPaperFrame
+				.getLayoutParams();
+
 		// Compute upper left corner in image coordinates
-		final int imageX = (int) (this.mainPaperView.getImagePosX() + params.leftMargin * this.mainPaperView.getScaleY());
-		final int imageY = (int) (this.mainPaperView.getImagePosY() + params.topMargin * this.mainPaperView.getScaleY());
-		
+		this.zoomedViewOffX = (int) (this.mainPaperView.getImagePosX() + params.leftMargin
+				* this.mainPaperView.getScaleY());
+		this.zoomedViewOffY = (int) (this.mainPaperView.getImagePosY() + params.topMargin
+				* this.mainPaperView.getScaleY());
+
 		this.zoomedPaperView.setImageScale(this.zoomRatio);
-		this.zoomedPaperView.scrollTo(imageX, imageY);
+		this.zoomedPaperView.scrollTo(this.zoomedViewOffX, this.zoomedViewOffY);
 	}
-	
+
 	/**
 	 * DrawView has detect a new drawing -> save
 	 * 
-	 * @param points		Points, which have been drawn.
+	 * @param points
+	 *            Points, which have been drawn.
 	 */
 	private void saveDrawing(List<Point2d> points) {
-		// Get layout parameters of the frame
-		LayoutParams params = (LayoutParams) this.zoomedPaperFrame.getLayoutParams();
-		// Compute upper left corner in image coordinates
-		final int offX = (int) (this.mainPaperView.getImagePosX() + params.leftMargin * this.mainPaperView.getScaleY());
-		final int offY = (int) (this.mainPaperView.getImagePosY() + params.topMargin * this.mainPaperView.getScaleY());
-		// final int offX = (int) (this.mainPaperView.getImagePosX() + (this.frameOffX / this.mainPaperView.getScaleX()));
-		// final int offY = (int) (this.mainPaperView.getImagePosY() + (this.frameOffY / this.mainPaperView.getScaleY()));
-		final float imgScale = this.zoomedPaperView.getImageScale();
-		
-		Point2d prev = null;
-		for (Point2d cur: points) {
-			if (null == prev) {
-				prev = cur;
-				continue;
-			}
-			
-			this.foregroundCanvas.drawLine(offX + (prev.x/imgScale), offY + (prev.y/imgScale), offX + (cur.x/imgScale), offY + (cur.y/imgScale), this.paint);
-			prev = cur;
+		boolean first = true;
+		float prevX = 0.f, prevY = 0.f, curX, curY;
+		for (Point2d cur : points) {
+			curX = this.zoomedViewOffX + (cur.x / this.zoomedPaperView.getImageScale());
+			curY = this.zoomedViewOffY + (cur.y / this.zoomedPaperView.getImageScale());
+
+			if (!first)
+				this.foregroundCanvas.drawLine(prevX, prevY, curX, curY,
+						this.paint);
+			else
+				first = false;
+
+			prevX = curX;
+			prevY = curY;
 		}
-		
+
 		// Clear draw view itself
 		this.drawView.clear();
 	}
