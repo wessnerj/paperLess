@@ -7,7 +7,7 @@
     android:orientation="vertical"
     tools:context=".EditorActivity" >
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/LinearLayout2"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -24,17 +24,27 @@
             android:id="@+id/spinner_color"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+        
+        <Button
+            android:id="@+id/button_undo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/undo" />
 
         <Button
             android:id="@+id/button_add_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
             android:text="@string/add_page" />
 
-    </RelativeLayout>
+    </LinearLayout>
 
+    <LinearLayout android:id="@+id/LinearLayoutDrawViews"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical" >
+        
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
@@ -119,5 +129,7 @@
             android:padding="0dp" />
 
     </RelativeLayout>
+    
+    </LinearLayout>
 
 </LinearLayout>

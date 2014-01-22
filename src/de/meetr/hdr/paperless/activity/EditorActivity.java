@@ -46,8 +46,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -86,7 +84,6 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 * Frame which shows the dimension of the zoomed view in the main view
 	 */
 	private View zoomedPaperFrame;
-
 	/**
 	 * View used for drawing
 	 */
@@ -113,10 +110,16 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	/**
 	 * Ratio of the zoom level between zoomed and main view
 	 */
-	private float zoomRatio = 2.f;
+	private float zoomRatio = 2.5f;
 
+	/**
+	 * List of available colors
+	 */
 	private List<ColorModel> availableColors;
 
+	/**
+	 * Helper variables for moving paper.
+	 */
 	private float lastX, lastY;
 	private int frameOffX, frameOffY;
 
@@ -158,7 +161,6 @@ public class EditorActivity extends Activity implements OnTouchListener {
 			public void onNothingSelected(AdapterView<?> arg0) {
 				// Nothing todo than
 			}
-
 		});
 
 		// Click event for add page
@@ -179,6 +181,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.zoomedPaperView = (BitmapView) this
 				.findViewById(R.id.zoomedPaperView);
 		this.zoomedPaperFrame = (View) this.findViewById(R.id.zoomedPaperFrame);
+		this.drawView = (DrawView) this.findViewById(R.id.drawView1);
 
 		// Add listeners
 		this.mainPaperView.setOnTouchListener(this);
@@ -194,7 +197,6 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.paint.setAntiAlias(true);
 
 		// Register for draw done event
-		this.drawView = (DrawView) this.findViewById(R.id.drawView1);
 		this.drawView.setOnDrawDoneListener(new OnDrawDoneListener() {
 			@Override
 			public boolean onDrawDone(List<Point2d> points) {
@@ -209,13 +211,13 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	public void onStart() {
 		super.onStart();
 
-		Log.d("onStart", "ImageView width: " + this.mainPaperView.getWidth());
+		// Log.d("onStart", "ImageView width: " + this.mainPaperView.getWidth());
 	}
 
 	public void onResume() {
 		super.onResume();
 
-		Log.d("onResume", "ImageView width: " + this.mainPaperView.getWidth());
+		// Log.d("onResume", "ImageView width: " + this.mainPaperView.getWidth());
 	}
 
 	@Override
@@ -385,17 +387,17 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		if (null == this.currentPage)
 			return;
 
-		ProgressDialog dialog = ProgressDialog.show(this,
-				getString(R.string.saving), getString(R.string.wait), true);
-
-		try {
-			this.currentPage.setBackground(this.backgroundBitmap);
-			this.currentPage.updateForeground(this.foregroundBitmap);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		dialog.dismiss();
+//		ProgressDialog dialog = ProgressDialog.show(this,
+//				getString(R.string.saving), getString(R.string.wait), true);
+//
+//		try {
+//			this.currentPage.setBackground(this.backgroundBitmap);
+//			this.currentPage.updateForeground(this.foregroundBitmap);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//
+//		dialog.dismiss();
 
 		this.clearBitmaps();
 	}
@@ -438,11 +440,23 @@ public class EditorActivity extends Activity implements OnTouchListener {
 	 *            Points, which have been drawn.
 	 */
 	private void saveDrawing(List<Point2d> points) {
+		float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE;
+		float maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE;
+		
 		boolean first = true;
 		float prevX = 0.f, prevY = 0.f, curX, curY;
 		for (Point2d cur : points) {
 			curX = this.zoomedViewOffX + (cur.x / this.zoomedPaperView.getImageScale());
 			curY = this.zoomedViewOffY + (cur.y / this.zoomedPaperView.getImageScale());
+			
+			if (curX < minX)
+				minX = curX;
+			if (curY < minY)
+				minY = curY;
+			if (curX > maxX)
+				maxX = curX;
+			if (curY > maxY)
+				maxY = curY;
 
 			if (!first)
 				this.foregroundCanvas.drawLine(prevX, prevY, curX, curY,
@@ -453,6 +467,16 @@ public class EditorActivity extends Activity implements OnTouchListener {
 			prevX = curX;
 			prevY = curY;
 		}
+		
+		// Save to page
+		try {
+			this.currentPage.updateForeground(this.foregroundBitmap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		// Invalidate main view
+		// TODO:
 
 		// Clear draw view itself
 		this.drawView.clear();

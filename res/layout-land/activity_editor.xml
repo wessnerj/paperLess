@@ -1,0 +1,135 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="horizontal"
+    tools:context=".EditorActivity" >
+
+    <LinearLayout
+        android:id="@+id/LinearLayout2"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:background="#888888"
+        android:orientation="vertical"
+        tools:context=".EditorActivity" >
+
+        <Spinner
+            android:id="@+id/spinner_thickness"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        
+        <Spinner
+            android:id="@+id/spinner_color"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        
+        <Button
+            android:id="@+id/button_undo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/undo" />
+
+        <Button
+            android:id="@+id/button_add_page"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_page" />
+
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/LinearLayoutDrawViews"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical" >
+        
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="2dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_weight="1" >
+
+        <TextView
+            android:id="@+id/noPageTextView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="@string/last_page_reached"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#E3E3E3" />
+
+        <de.meetr.hdr.paperless.view.BitmapView
+            android:id="@+id/mainPaperView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="0dp"
+            android:background="#444444"
+            android:padding="4dp"
+            android:scaleType="matrix"
+            android:src="@drawable/ic_launcher"
+            android:visibility="invisible" />
+
+        <View
+            android:id="@+id/zoomedPaperFrame"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="false"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="100dp"
+            android:background="@drawable/frame"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+
+        <TextView
+            android:id="@+id/noPageTextView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="@string/last_page_reached"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#E3E3E3" />
+
+        <de.meetr.hdr.paperless.view.BitmapView
+            android:id="@+id/zoomedPaperView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="2dp"
+            android:background="#444444"
+            android:padding="0dp"
+            android:scaleType="matrix"
+            android:src="@drawable/ic_launcher"
+            android:visibility="invisible" />
+
+        <de.meetr.hdr.paperless.view.DrawView
+            android:id="@+id/drawView1"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="2dp"
+            android:padding="0dp" />
+
+    </RelativeLayout>
+    
+    </LinearLayout>
+
+</LinearLayout>
