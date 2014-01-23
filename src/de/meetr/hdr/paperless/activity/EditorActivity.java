@@ -362,6 +362,12 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.currentPage = this.currentPaper.addNewPage(
 				this.backgroundBitmap.getWidth(),
 				this.backgroundBitmap.getHeight());
+		try {
+			this.currentPage.setBackground(this.backgroundBitmap);
+			this.currentPage.setForeground(this.foregroundBitmap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		Drawable[] layers = new Drawable[2];
 		layers[0] = new BitmapDrawable(this.getResources(),
@@ -476,7 +482,8 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		}
 		
 		// Invalidate main view
-		// TODO:
+		// TODO: Make more efficient -> only invalidate changed area
+		this.mainPaperView.invalidate();
 
 		// Clear draw view itself
 		this.drawView.clear();

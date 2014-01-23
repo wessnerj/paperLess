@@ -57,6 +57,11 @@ public class Paper {
 	 */
 	private SQLiteDatabase db = null;
 	
+	/**
+	 * Constructor, which takes the SQLite database as first argument.
+	 * 
+	 * @param db SQLiter database of this paper
+	 */
 	public Paper(SQLiteDatabase db) {
 		this.db = db;
 	}
@@ -110,6 +115,12 @@ public class Paper {
 		return null;
 	}
 	
+	/**
+	 * Sets a meta information for this paper.
+	 * 
+	 * @param key		Which meta information should be set?
+	 * @param value		Value of given meta information.
+	 */
 	private void setMetaInformation(String key, String value) {
 		// Delete old information (if any)
 		this.delMetaInformation(key);
@@ -120,12 +131,23 @@ public class Paper {
 		this.db.insert(META_TABLE, null, values);
 	}
 	
+	/**
+	 * Deletes a specific meta information from the paper.
+	 * 
+	 * @param key		Meta information, which should be deleted
+	 */
 	private void delMetaInformation(String key) {
 		final String where = META_FIELD_KEY + "=?";
 		final String[] whereArgs = { key };
 		this.db.delete(META_TABLE, where, whereArgs);
 	}
 	
+	/**
+	 * Get a page by page number.
+	 * 
+	 * @param pageNumber	Number of the page to get
+	 * @return				Page with given number
+	 */
 	public Page getPage(int pageNumber) {
 		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_CURRENT_HISTORY, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
 		final String where = PAGE_FIELD_NUMBER + "=?";
@@ -138,7 +160,6 @@ public class Paper {
 			return null;
 		
 		final long id = c.getLong(c.getColumnIndex(PAGE_FIELD_ID));
-		// final int n = c.getInt(c.getColumnIndex(PAGE_FIELD_NUMBER));
 		final int history = c.getInt(c.getColumnIndex(PAGE_FIELD_CURRENT_HISTORY));
 		final int w = c.getInt(c.getColumnIndex(PAGE_FIELD_WIDTH));
 		final int h = c.getInt(c.getColumnIndex(PAGE_FIELD_HEIGHT));
@@ -148,6 +169,13 @@ public class Paper {
 		return p;
 	}
 	
+	/**
+	 * Add a new page at the end of the paper.
+	 * 
+	 * @param w			Width of the new page [px]
+	 * @param h			Height of the new page [px]
+	 * @return			Newly created page
+	 */
 	public Page addNewPage(int w, int h) {
 		final int currentNumberOfPages = this.getNumberOfPages();
 		if (0 > currentNumberOfPages)
@@ -156,11 +184,25 @@ public class Paper {
 		return this.addNewPage(w, h, currentNumberOfPages+1);
 	}
 	
+	/**
+	 * Add a new page at a specific page number.
+	 * 
+	 * @param w				Width of the new page [px]
+	 * @param h				Height of the new page [px]
+	 * @param pageNumber	Page number of the new page.
+	 * @return				Newly created page
+	 */
 	public Page addNewPage(int w, int h, int pageNumber) {
 		// Add new page to database
 		// First check if pageNumber already exists
-		if (null != this.getPage(pageNumber))
-			return null;	// pageNumber already exists
+		if (null != this.getPage(pageNumber)) {
+			// pageNumber already exists
+			// Shift all pages, starting with pageNumber one number higher
+			this.db.execSQL(
+					"UPDATE `" + PAGE_TABLE + "` "
+					+ "SET `" + PAGE_FIELD_NUMBER + "` = `" + PAGE_FIELD_NUMBER + "`+1 "
+					+ "WHERE `" + PAGE_FIELD_NUMBER + "` >= '" + pageNumber + "'");
+		}
 		
 		// Add new page to page table
 		ContentValues values = new ContentValues(); 
@@ -184,9 +226,6 @@ public class Paper {
 		
 		return new Page(this, id, w, h, 0, this.db);
 	}
-	
-//	public void savePage(long identifier, int layer, byte[] content) {
-//	}
 	
 	/**
 	 * Created a new paperLess file

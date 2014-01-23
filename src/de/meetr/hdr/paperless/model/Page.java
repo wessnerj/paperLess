@@ -135,14 +135,33 @@ public class Page {
 		this.saveCurrentForegroundToHistory();
 		this.history++;
 		
+		this.setForeground(b);
+	}
+	
+	/**
+	 * Sets new foreground bitmap. Does NOT save the current one to history, use
+	 * updateForeground instead.
+	 * 
+	 * Note: height and width of the background has to match with the
+	 * 		dimensions of the page.
+	 * 
+	 * @param b				Bitmap of the new foreground image
+	 * @throws Exception	If any error during saving occurs
+	 */
+	public void setForeground(Bitmap b) throws Exception {
+		// Check dimensions
+		if (this.height != b.getHeight() || this.width != b.getWidth())
+			throw new Exception("Dimension mismatch.");
+		
 		// Set new foreground bitmap
 		this.foreground = b;
-		
+
 		// Update db
-		ContentValues values = new ContentValues(); 
-		values.put(Paper.PAGE_FIELD_FOREGROUND , this.bitmapToBlob(this.foreground));
+		ContentValues values = new ContentValues();
+		values.put(Paper.PAGE_FIELD_FOREGROUND,
+				this.bitmapToBlob(this.foreground));
 		values.put(Paper.PAGE_FIELD_CURRENT_HISTORY, this.history);
-		
+
 		// Which row to update, based on the ID
 		String selection = Paper.PAGE_FIELD_ID + " = ?";
 		String[] selectionArgs = { "" + this.identifier };
