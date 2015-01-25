@@ -23,18 +23,27 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.artifex.mupdfdemo.MuPDFCore;
+
 import de.meetr.hdr.paperless.R;
 import de.meetr.hdr.paperless.misc.IntentHelper;
 import de.meetr.hdr.paperless.model.FileManager;
 import de.meetr.hdr.paperless.model.FileResource;
+import de.meetr.hdr.paperless.model.Page;
 import de.meetr.hdr.paperless.model.Paper;
+import de.meetr.hdr.paperless.paper.PageFactory;
 import de.meetr.hdr.paperless.view.FileListAdapter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.PointF;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -54,6 +63,8 @@ import android.widget.Toast;
  * @author Joseph Wessner <joseph@wessner.org>
  */
 public class StartActivity extends Activity implements OnItemClickListener {
+	private static final int REQUEST_FILE_CHOOSER = 7754;
+	
 	/**
 	 * Final reference to this, can be used in subclasses.
 	 */
@@ -252,7 +263,7 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		if (null == newPaper)
 			return false;
 		
-		// Close the new Paper as we do not open it immediatly
+		// Close the new Paper as we do not open it immediately
 		newPaper.close();
 		return true;
 	}
@@ -263,6 +274,93 @@ public class StartActivity extends Activity implements OnItemClickListener {
 	 */
 	private void importPdf() {
 		Toast.makeText(this, "Import PDF", Toast.LENGTH_SHORT).show();
+		
+		// Create the ACTION_GET_CONTENT Intent
+		final Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+		// The MIME data type filter
+		getContentIntent.setType("application/pdf");
+        // Only return URIs that can be opened with ContentResolver
+        getContentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+
+	    Intent intent = Intent.createChooser(getContentIntent, "Select a file");
+	    startActivityForResult(intent, REQUEST_FILE_CHOOSER);
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case REQUEST_FILE_CHOOSER:
+			if (resultCode == RESULT_OK) {
+
+				final Uri uri = data.getData();
+
+				// Get the File path from the Uri
+//				String path = FileUtils.getPath(this, uri);
+				String path = getRealPathFromURI(this, uri);
+				
+				Toast.makeText(this, "Selected file: " + path, Toast.LENGTH_LONG).show();
+				
+				MuPDFCore mc = null;
+				try {
+					mc = new MuPDFCore(this, path);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				// Get basename
+				int idx = path.lastIndexOf("/");
+				String filename = (-1 == idx)? path: path.substring(idx+1);
+				idx = filename.lastIndexOf(".");
+				String basename = (-1 == idx)? filename: filename.substring(0, idx);
+				
+				// Save new paper
+				saveNewPaper(basename);
+				
+				// Get paper
+				FileResource f = new FileResource(this.fileManager.getFile(this.currentPath, basename));
+				Paper p = f.getPaper();
+				
+				int nPages = mc.countPages();
+				for (int i = 0; i < nPages; i++) {
+					PointF pageSize = mc.getPageSize(i);
+					float width = pageSize.x;
+					float height = pageSize.y;
+					
+					while (width > 1200 || height > 1200) {
+						width /= 2.f;
+						height /= 2.f;
+					}
+					
+					Bitmap backgroundBitmap = mc.drawPage(i, (int) width, (int) height, 0, 0, (int) pageSize.x, (int) pageSize.y);
+					Bitmap foregroundBitmap = Bitmap.createBitmap(
+							backgroundBitmap.getWidth(),
+							backgroundBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+					
+					Page page = p.addNewPage(
+							backgroundBitmap.getWidth(),
+							backgroundBitmap.getHeight());
+					try {
+						page.setBackground(backgroundBitmap);
+						page.setForeground(foregroundBitmap);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					foregroundBitmap.recycle();
+					backgroundBitmap.recycle();
+				}
+				Toast.makeText(this, "Pages: " + nPages, Toast.LENGTH_LONG).show();
+
+				p.close();
+				// Alternatively, use FileUtils.getFile(Context, Uri)
+//				if (path != null && FileUtils.isLocal(path)) {
+//					File file = new File(path);
+//				}
+			}
+			break;
+		}
 	}
 	
 	/**
@@ -366,5 +464,22 @@ public class StartActivity extends Activity implements OnItemClickListener {
 		// Set new listAdapter for listView
 		this.listAdapter = new FileListAdapter(this, items.toArray(new FileResource[0]));
 		listview.setAdapter(this.listAdapter);
+	}
+	
+	private static String getRealPathFromURI(Context context, Uri contentUri) {
+		Cursor cursor = null;
+		try {
+			String[] proj = { MediaStore.Images.Media.DATA };
+			cursor = context.getContentResolver().query(contentUri, proj, null,
+					null, null);
+			int column_index = cursor
+					.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+			cursor.moveToFirst();
+			return cursor.getString(column_index);
+		} finally {
+			if (cursor != null) {
+				cursor.close();
+			}
+		}
 	}
 }
