@@ -45,7 +45,6 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -54,8 +53,10 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 /**
  * (Main) Activity for viewing/editing Paper(s).
@@ -171,6 +172,20 @@ public class EditorActivity extends Activity implements OnTouchListener {
 				addPage();
 			}
 		});
+		
+		// Click event for prev / next page
+		((ImageButton) this.findViewById(R.id.imageButton_prev)).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				prevPage();
+			}
+		});
+		((ImageButton) this.findViewById(R.id.imageButton_next)).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				nextPage();
+			}
+		});
 
 		// Get Paper from IntentHelper
 		this.currentPaper = (Paper) IntentHelper
@@ -206,6 +221,12 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		});
 		// Set Paint for drawView
 		this.drawView.setPaint(this.paint);
+		
+		if (this.currentPaper.getNumberOfPages() > 0)
+			this.openPage(1);
+		else
+			((TextView) this.findViewById(R.id.pageInfo)).setText(String
+					.format(getString(R.string.page_info), 0, 0));
 	}
 
 	public void onStart() {
@@ -338,36 +359,37 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		// Display the dialog
 		alert.show();
 	}
-
-	/**
-	 * Actually adds a new page to the paper.
-	 * 
-	 * @param type
-	 *            Type of the new page
-	 */
-	private void addPage(PageFactory.PaperType type) {
+	
+	private void prevPage() {
+		if (null == this.currentPage || this.currentPage.getPageNumber() == 1)
+			return;
+		
+		this.openPage(this.currentPage.getPageNumber() - 1);
+	}
+	
+	private void nextPage() {
+		if (null == this.currentPage || this.currentPage.getPageNumber() == this.currentPaper.getNumberOfPages())
+			return;
+		
+		this.openPage(this.currentPage.getPageNumber() + 1);
+	}
+	
+	private void openPage(int pageNumber) {
+		if (pageNumber > this.currentPaper.getNumberOfPages())
+			return; // Invalid page
+		
+		// Close current page
 		this.closePage();
 
-		ProgressDialog dialog = ProgressDialog.show(this,
-				getString(R.string.saving), getString(R.string.wait)
-						+ "adding...", true);
+		this.currentPage = this.currentPaper.getPage(pageNumber);
 
-		this.backgroundBitmap = PageFactory.getDINA4Page(type);
-		this.foregroundBitmap = Bitmap.createBitmap(
-				this.backgroundBitmap.getWidth(),
-				this.backgroundBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+		this.backgroundBitmap = this.currentPage.getBackground();
+		Bitmap fg = this.currentPage.getForeground();
+		this.foregroundBitmap = fg.copy(Bitmap.Config.ARGB_8888, true);
+		fg = null;
+		
 		this.foregroundCanvas = new Canvas(this.foregroundBitmap);
 		this.foregroundCanvas.drawARGB(0, 0, 0, 0);
-
-		this.currentPage = this.currentPaper.addNewPage(
-				this.backgroundBitmap.getWidth(),
-				this.backgroundBitmap.getHeight());
-		try {
-			this.currentPage.setBackground(this.backgroundBitmap);
-			this.currentPage.setForeground(this.foregroundBitmap);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		Drawable[] layers = new Drawable[2];
 		layers[0] = new BitmapDrawable(this.getResources(),
@@ -382,6 +404,48 @@ public class EditorActivity extends Activity implements OnTouchListener {
 		this.mainPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperView.setVisibility(View.VISIBLE);
 		this.zoomedPaperFrame.setVisibility(View.VISIBLE);
+
+		// Set Page info
+		((TextView) this.findViewById(R.id.pageInfo)).setText(String.format(
+				getString(R.string.page_info), this.currentPage.getPageNumber(),
+				this.currentPaper.getNumberOfPages()));
+	}
+
+	/**
+	 * Actually adds a new page to the paper.
+	 * 
+	 * @param type
+	 *            Type of the new page
+	 */
+	private void addPage(PageFactory.PaperType type) {
+		ProgressDialog dialog = ProgressDialog.show(this,
+				getString(R.string.saving), getString(R.string.wait)
+						+ "adding...", true);
+
+		Bitmap backgroundBitmap = PageFactory.getDINA4Page(type);
+		Bitmap foregroundBitmap = Bitmap.createBitmap(
+				backgroundBitmap.getWidth(),
+				backgroundBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+
+		if (null == this.currentPage)
+			this.currentPage = this.currentPaper.addNewPage(
+					backgroundBitmap.getWidth(),
+					backgroundBitmap.getHeight());
+		else
+			this.currentPage = this.currentPaper.addNewPage(
+					backgroundBitmap.getWidth(),
+					backgroundBitmap.getHeight(),
+					this.currentPage.getPageNumber() + 1);
+		
+		try {
+			this.currentPage.setBackground(backgroundBitmap);
+			this.currentPage.setForeground(foregroundBitmap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		// Open new page
+		this.openPage(this.currentPaper.getNumberOfPages());
 
 		dialog.dismiss();
 	}
@@ -406,6 +470,7 @@ public class EditorActivity extends Activity implements OnTouchListener {
 //		dialog.dismiss();
 
 		this.clearBitmaps();
+		this.currentPage = null;
 	}
 
 	/**

@@ -40,17 +40,17 @@ public class Paper {
 	public static final String PAGE_TABLE = "pages";
 	public static final String PAGE_FIELD_ID = "_id";
 	public static final String PAGE_FIELD_NUMBER = "pageNumber";
-	public static final String PAGE_FIELD_CURRENT_HISTORY = "curHistory";
+//	public static final String PAGE_FIELD_CURRENT_HISTORY = "curHistory";
 	public static final String PAGE_FIELD_WIDTH = "width";
 	public static final String PAGE_FIELD_HEIGHT = "height";
 	public static final String PAGE_FIELD_BACKGROUND = "background";
 	public static final String PAGE_FIELD_FOREGROUND = "foreground";
 	
-	public static final String HISTORY_TABLE = "history";
-	public static final String HISTORY_FIELD_ID = "_id";
-	public static final String HISTORY_FIELD_PAGE = "page_id";
-	public static final String HISTORY_FIELD_NUMBER = "number";
-	public static final String HISTORY_FIELD_DATA = "data";
+//	public static final String HISTORY_TABLE = "history";
+//	public static final String HISTORY_FIELD_ID = "_id";
+//	public static final String HISTORY_FIELD_PAGE = "page_id";
+//	public static final String HISTORY_FIELD_NUMBER = "number";
+//	public static final String HISTORY_FIELD_DATA = "data";
 	
 	/**
 	 * Sqlite database where the data is stored.
@@ -149,7 +149,8 @@ public class Paper {
 	 * @return				Page with given number
 	 */
 	public Page getPage(int pageNumber) {
-		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_CURRENT_HISTORY, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
+//		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_CURRENT_HISTORY, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
+		final String[] fields = { PAGE_FIELD_ID, PAGE_FIELD_NUMBER, PAGE_FIELD_WIDTH, PAGE_FIELD_HEIGHT};
 		final String where = PAGE_FIELD_NUMBER + "=?";
 		final String[] whereArgs = { ""+pageNumber };
 		
@@ -160,13 +161,13 @@ public class Paper {
 			return null;
 		
 		final long id = c.getLong(c.getColumnIndex(PAGE_FIELD_ID));
-		final int history = c.getInt(c.getColumnIndex(PAGE_FIELD_CURRENT_HISTORY));
+//		final int history = c.getInt(c.getColumnIndex(PAGE_FIELD_CURRENT_HISTORY));
 		final int w = c.getInt(c.getColumnIndex(PAGE_FIELD_WIDTH));
 		final int h = c.getInt(c.getColumnIndex(PAGE_FIELD_HEIGHT));
 		c.close();
 		
-		Page p = new Page(this, id, w, h, history, this.db);
-		return p;
+//		return new Page(this, id, w, h, history, this.db);
+		return new Page(this, id, w, h, pageNumber, this.db);
 	}
 	
 	/**
@@ -209,7 +210,7 @@ public class Paper {
 		values.put(PAGE_FIELD_NUMBER, pageNumber);
 		values.put(PAGE_FIELD_WIDTH, w);
 		values.put(PAGE_FIELD_HEIGHT, h);
-		values.put(PAGE_FIELD_CURRENT_HISTORY, 0);
+//		values.put(PAGE_FIELD_CURRENT_HISTORY, 0);
 		
 		// Insert
 		final long id = db.insert(PAGE_TABLE, null, values);
@@ -224,7 +225,8 @@ public class Paper {
 		// Update modified date
 		this.setMetaInformation(META_KEY_MODIFIED, ""+System.currentTimeMillis());
 		
-		return new Page(this, id, w, h, 0, this.db);
+//		return new Page(this, id, w, h, 0, this.db);
+		return new Page(this, id, w, h, pageNumber, this.db);
 	}
 	
 	/**
@@ -287,20 +289,20 @@ public class Paper {
 			db.execSQL("CREATE TABLE " + PAGE_TABLE + "("
 					+ PAGE_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
 					+ PAGE_FIELD_NUMBER + " INTEGER UNIQUE,"
-					+ PAGE_FIELD_CURRENT_HISTORY + " INTEGER,"
+//					+ PAGE_FIELD_CURRENT_HISTORY + " INTEGER,"
 					+ PAGE_FIELD_WIDTH + " INTEGER,"
 					+ PAGE_FIELD_HEIGHT + " INTEGER,"
 					+ PAGE_FIELD_BACKGROUND + " BLOB,"
 					+ PAGE_FIELD_FOREGROUND + " BLOB"
 					+ ")");
 			
-			// History table
-			db.execSQL("CREATE TABLE " + HISTORY_TABLE + "("
-					+ HISTORY_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ HISTORY_FIELD_PAGE + " INTEGER,"
-					+ HISTORY_FIELD_NUMBER + " INTEGER,"
-					+ HISTORY_FIELD_DATA + " BLOB"
-					+ ")");
+//			// History table
+//			db.execSQL("CREATE TABLE " + HISTORY_TABLE + "("
+//					+ HISTORY_FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+//					+ HISTORY_FIELD_PAGE + " INTEGER,"
+//					+ HISTORY_FIELD_NUMBER + " INTEGER,"
+//					+ HISTORY_FIELD_DATA + " BLOB"
+//					+ ")");
 			
 			/***************************
 			 * Store default meta data *

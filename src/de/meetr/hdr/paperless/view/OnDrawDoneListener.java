@@ -20,7 +20,6 @@
 package de.meetr.hdr.paperless.view;
 
 import java.util.List;
-
 import de.meetr.hdr.paperless.model.Point2d;
 
 /**

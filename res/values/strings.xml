@@ -33,5 +33,6 @@
     <string name="color_blue">Blue</string>
     <string name="color_custom">Custom</string>
     <string name="undo">Undo</string>
+    <string name="page_info" formatted="false">Page %d of %d</string>
 
 </resources>

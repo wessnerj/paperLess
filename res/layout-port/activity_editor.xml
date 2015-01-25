@@ -36,6 +36,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/add_page" />
+        
+        <TextView
+            android:id="@+id/pageInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/page_info" />
+        
+        <ImageButton
+            android:id="@+id/imageButton_prev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_previous_item" />
+        
+        <ImageButton
+            android:id="@+id/imageButton_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_next_item" />
 
     </LinearLayout>
 

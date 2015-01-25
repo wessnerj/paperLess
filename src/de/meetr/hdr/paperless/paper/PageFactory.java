@@ -33,19 +33,19 @@ public class PageFactory {
 	/**
 	 * Default resolution in ppi
 	 */
-	public static final int RESOLUTION = 150;
+	public static final int RESOLUTION = 100;
 	/**
 	 * Default width in pixel (209,97mm = DIN A4)
 	 */
-	public static final int DEFAULT_WIDTH = 1240;
+	public static final int DEFAULT_WIDTH = 823;
 	/**
 	 * Default height in pixel (297,01mm = DIN A4)
 	 */
-	public static final int DEFAULT_HEIGHT = 1754;
+	public static final int DEFAULT_HEIGHT = 1169;
 	/**
 	 * Number of pixel per mm.
 	 */
-	public static final float MM_TO_PX = 5.9055f;
+	public static final float MM_TO_PX = 3.937f;
 	
 	/**
 	 * Singleton instance

@@ -38,18 +38,21 @@ public class Page {
 	private final long identifier;
 	private final int width;
 	private final int height;
-	private int history;
+	private final int pageNumber;
+//	private int history;
 	
 	private Bitmap foreground = null;
 	
 	private final SQLiteDatabase db;
 	
-	public Page(Paper p, long id, int w, int h, int history, SQLiteDatabase db) {
+//	public Page(Paper p, long id, int w, int h, int history, SQLiteDatabase db) {
+	public Page(Paper p, long id, int w, int h, int nbr, SQLiteDatabase db) {
 		this.paper = p;
 		this.identifier = id;
 		this.width = w;
 		this.height = h;
-		this.history = history;
+//		this.history = history;
+		this.pageNumber = nbr;
 		this.db = db;
 	}
 	
@@ -63,6 +66,10 @@ public class Page {
 	
 	public int getHeight() {
 		return this.height;
+	}
+	
+	public int getPageNumber() {
+		return this.pageNumber;
 	}
 	
 	/**
@@ -131,9 +138,9 @@ public class Page {
 		if (this.height != b.getHeight() || this.width != b.getWidth())
 			throw new Exception("Dimension mismatch.");
 		
-		// First let's save the current content
-		this.saveCurrentForegroundToHistory();
-		this.history++;
+//		// First let's save the current content
+//		this.saveCurrentForegroundToHistory();
+//		this.history++;
 		
 		this.setForeground(b);
 	}
@@ -160,7 +167,7 @@ public class Page {
 		ContentValues values = new ContentValues();
 		values.put(Paper.PAGE_FIELD_FOREGROUND,
 				this.bitmapToBlob(this.foreground));
-		values.put(Paper.PAGE_FIELD_CURRENT_HISTORY, this.history);
+//		values.put(Paper.PAGE_FIELD_CURRENT_HISTORY, this.history);
 
 		// Which row to update, based on the ID
 		String selection = Paper.PAGE_FIELD_ID + " = ?";
@@ -209,29 +216,33 @@ public class Page {
 	
 	private Bitmap blobToBitmap(byte[] blob, boolean foreground) {
 		BitmapFactory.Options options = new BitmapFactory.Options();
-		if (foreground)
+		if (foreground) {
 			options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-		else
+			options.inMutable = true;
+		}
+		else {
 			options.inPreferredConfig = Bitmap.Config.RGB_565;
+			options.inMutable = false;
+		}
 		
 		return BitmapFactory.decodeByteArray(blob, 0, blob.length, options);
 	}
 	
-	private void saveCurrentForegroundToHistory() throws IOException {
-		// Delete all history items, which have greater or equal history number
-		// or are too old (number <= this.history - MAX_HISTORY)
-		String[] whereArgs = { "" + this.identifier, "" + this.history,
-				"" + (this.history - MAX_HISTORY) };
-		this.db.delete(Paper.HISTORY_FIELD_PAGE, Paper.HISTORY_FIELD_PAGE
-				+ " = ? AND (" + Paper.HISTORY_FIELD_NUMBER + " >= ? OR "
-				+ Paper.HISTORY_FIELD_NUMBER + " <= ?", whereArgs);
-		
-		// Add current foreground to history
-		ContentValues values = new ContentValues();
-		values.put(Paper.HISTORY_FIELD_PAGE, this.identifier);
-		values.put(Paper.HISTORY_FIELD_NUMBER, this.history);
-		if (null != this.foreground)
-			values.put(Paper.HISTORY_FIELD_DATA, this.bitmapToBlob(this.foreground));
-		this.db.insert(Paper.HISTORY_TABLE, null, values);
-	}
+//	private void saveCurrentForegroundToHistory() throws IOException {
+//		// Delete all history items, which have greater or equal history number
+//		// or are too old (number <= this.history - MAX_HISTORY)
+//		String[] whereArgs = { "" + this.identifier, "" + this.history,
+//				"" + (this.history - MAX_HISTORY) };
+//		this.db.delete(Paper.HISTORY_FIELD_PAGE, Paper.HISTORY_FIELD_PAGE
+//				+ " = ? AND (" + Paper.HISTORY_FIELD_NUMBER + " >= ? OR "
+//				+ Paper.HISTORY_FIELD_NUMBER + " <= ?", whereArgs);
+//		
+//		// Add current foreground to history
+//		ContentValues values = new ContentValues();
+//		values.put(Paper.HISTORY_FIELD_PAGE, this.identifier);
+//		values.put(Paper.HISTORY_FIELD_NUMBER, this.history);
+//		if (null != this.foreground)
+//			values.put(Paper.HISTORY_FIELD_DATA, this.bitmapToBlob(this.foreground));
+//		this.db.insert(Paper.HISTORY_TABLE, null, values);
+//	}
 }
